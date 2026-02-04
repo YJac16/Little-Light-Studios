@@ -1,0 +1,34 @@
+{
+  "napStories": [
+    {
+      "id": "nap-1",
+      "title": "The Sleepy Little Cloud",
+      "text": "Once upon a time, high up in the sky, there lived a little cloud named Cotton. Cotton was soft and fluffy, and loved to drift gently across the blue sky. One warm afternoon, Cotton felt very sleepy. The sun warmed Cotton's fluffy edges, and a gentle breeze rocked Cotton back and forth. Cotton closed its eyes and dreamed of soft meadows and quiet streams. Slowly, Cotton drifted lower and lower, until it rested softly on a green hill. And there, Cotton slept the sweetest, calmest sleep until the morning sun gently woke it up. The end.",
+      "narrationUrl": null,
+      "backgroundSoundUrl": null
+    },
+    {
+      "id": "nap-2",
+      "title": "The Quiet Rabbit's Nap",
+      "text": "In a peaceful meadow lived a little rabbit named Thistle. Thistle loved to hop and play, but when the afternoon grew warm, Thistle knew it was time for a nap. Thistle found a cozy spot under a shady bush. The leaves whispered softly. The bees buzzed gently in the distance. Thistle's eyes grew heavy. One soft breath, then another. And soon, Thistle was fast asleep, dreaming of carrots and clover. Sweet dreams, little Thistle. The end.",
+      "narrationUrl": null,
+      "backgroundSoundUrl": null
+    }
+  ],
+  "bedtimeStories": [
+    {
+      "id": "bed-1",
+      "title": "The Moon's Lullaby",
+      "text": "Every night, when the stars came out, the Moon would sing a soft lullaby. The Moon's voice was gentle and kind, like a whisper from far away. The children would look out their windows and listen. The Moon sang of quiet seas and sleeping birds. It sang of dreams and tomorrow. And as the Moon sang, the children's eyes grew heavy. Their breath became slow and steady. One by one, they drifted off to sleep, wrapped in the Moon's soft light. Goodnight, little ones. The end.",
+      "narrationUrl": null,
+      "backgroundSoundUrl": null
+    },
+    {
+      "id": "bed-2",
+      "title": "The Kind Stars",
+      "text": "Far above the world, the stars twinkled softly. They watched over all the sleeping children below. Tonight, little Emma looked up at them before she closed her eyes. 'Goodnight, stars,' she whispered. And the stars seemed to twinkle just a little brighter, as if they were saying goodnight back. Emma smiled. She felt safe and loved. She pulled her blanket close and closed her eyes. The stars kept watch all through the night, until the morning sun gently woke her. The end.",
+      "narrationUrl": null,
+      "backgroundSoundUrl": null
+    }
+  ]
+}
