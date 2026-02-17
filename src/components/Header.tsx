@@ -4,7 +4,7 @@ export function Header() {
   const location = useLocation()
 
   const isActive = (path: string, exact?: boolean) =>
-    exact ? location.pathname === path : location.pathname.startsWith(path)
+    exact ? location.pathname === path : location.pathname.startsWith(path + '/') || location.pathname === path
   const navLinkClass = (path: string, exact = true) =>
     `min-h-[44px] min-w-[44px] inline-flex items-center justify-center px-5 py-3 rounded-xl text-lg font-medium transition-colors duration-200 ${
       isActive(path, exact)

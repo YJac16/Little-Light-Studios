@@ -46,7 +46,10 @@ src/
 ## Data
 
 - **Videos:** Edit `src/data/videos.json` to add/update video metadata. Replace `youtubeId` values with real video IDs from the [Lively Little Learners](https://www.youtube.com/@LivelyLittleLearners) YouTube channel.
-- **Stories:** Edit `src/data/stories.json` for nap and bedtime stories. Add `narrationUrl` and `backgroundSoundUrl` (paths to audio files) when you have narration/ambient audio.
+- **Stories:** Edit `src/data/stories.json`. Place audio files in `public/audio/`:
+  - `[story-id]-narration.mp3` – story narration
+  - `dhikr.mp3` – dhikr for loop mode
+  - `white-noise.mp3` – white noise for loop mode
 
 ## Deployment (Vercel)
 
