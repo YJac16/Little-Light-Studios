@@ -2,6 +2,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useRef, useState, useEffect } from 'react'
 import storiesData from '../data/stories.json'
 import { READING_TIPS } from '../data/readingTips'
+import { DHIKR_OPTIONS, WHITE_NOISE_OPTIONS } from '../data/audioOptions'
 
 interface Story {
   id: string
@@ -30,6 +31,20 @@ function getPrevNextIds(currentId: string): { prev: string | null; next: string 
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25]
 
+// Dhikr index: -1 = off, 0 = option 1, 1 = option 2
+// White noise: same
+function cycleDhikrIndex(current: number): number {
+  if (current < 0) return 0
+  if (current < DHIKR_OPTIONS.length - 1) return current + 1
+  return -1
+}
+
+function cycleWhiteNoiseIndex(current: number): number {
+  if (current < 0) return 0
+  if (current < WHITE_NOISE_OPTIONS.length - 1) return current + 1
+  return -1
+}
+
 export function StoryDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -41,13 +56,12 @@ export function StoryDetailPage() {
   const whiteNoiseRef = useRef<HTMLAudioElement>(null)
 
   const [narrationPlaying, setNarrationPlaying] = useState(false)
-  const [dhikrOn, setDhikrOn] = useState(false)
-  const [whiteNoiseOn, setWhiteNoiseOn] = useState(false)
+  const [loopStory, setLoopStory] = useState(false)
+  const [dhikrIndex, setDhikrIndex] = useState(-1)
+  const [whiteNoiseIndex, setWhiteNoiseIndex] = useState(-1)
   const [playbackRate, setPlaybackRate] = useState(1)
 
   const hasNarration = !!story?.narrationUrl
-  const hasDhikr = !!story?.dhikrUrl
-  const hasWhiteNoise = !!story?.whiteNoiseUrl
 
   useEffect(() => {
     const a = narrationRef.current
@@ -65,30 +79,6 @@ export function StoryDetailPage() {
     setNarrationPlaying(!narrationPlaying)
   }
 
-  const toggleDhikr = () => {
-    const audio = dhikrRef.current
-    if (!audio || !hasDhikr) return
-    if (dhikrOn) {
-      audio.pause()
-      setDhikrOn(false)
-    } else {
-      audio.play().catch(() => {})
-      setDhikrOn(true)
-    }
-  }
-
-  const toggleWhiteNoise = () => {
-    const audio = whiteNoiseRef.current
-    if (!audio || !hasWhiteNoise) return
-    if (whiteNoiseOn) {
-      audio.pause()
-      setWhiteNoiseOn(false)
-    } else {
-      audio.play().catch(() => {})
-      setWhiteNoiseOn(true)
-    }
-  }
-
   const goPrev = () => prev && navigate(`/stories/${prev}`)
   const goNext = () => next && navigate(`/stories/${next}`)
 
@@ -97,13 +87,57 @@ export function StoryDetailPage() {
     setPlaybackRate(SPEED_OPTIONS[(i + 1) % SPEED_OPTIONS.length])
   }
 
+  const cycleDhikr = () => {
+    const audio = dhikrRef.current
+    if (audio) {
+      audio.pause()
+      audio.src = ''
+    }
+    const nextIndex = cycleDhikrIndex(dhikrIndex)
+    setDhikrIndex(nextIndex)
+    if (nextIndex >= 0 && dhikrRef.current) {
+      dhikrRef.current.src = DHIKR_OPTIONS[nextIndex]
+      dhikrRef.current.play().catch(() => {})
+    }
+  }
+
+  const cycleWhiteNoise = () => {
+    const audio = whiteNoiseRef.current
+    if (audio) {
+      audio.pause()
+      audio.src = ''
+    }
+    const nextIndex = cycleWhiteNoiseIndex(whiteNoiseIndex)
+    setWhiteNoiseIndex(nextIndex)
+    if (nextIndex >= 0 && whiteNoiseRef.current) {
+      whiteNoiseRef.current.src = WHITE_NOISE_OPTIONS[nextIndex]
+      whiteNoiseRef.current.play().catch(() => {})
+    }
+  }
+
+  useEffect(() => {
+    const a = narrationRef.current
+    if (!a || !hasNarration) return
+    const onEnded = () => {
+      setNarrationPlaying(false)
+      if (loopStory) {
+        a.currentTime = 0
+        a.play().catch(() => {})
+      }
+    }
+    a.addEventListener('ended', onEnded)
+    return () => a.removeEventListener('ended', onEnded)
+  }, [loopStory, hasNarration])
+
   useEffect(() => {
     setNarrationPlaying(false)
-    setDhikrOn(false)
-    setWhiteNoiseOn(false)
+    setDhikrIndex(-1)
+    setWhiteNoiseIndex(-1)
     narrationRef.current?.pause()
     dhikrRef.current?.pause()
+    dhikrRef.current && (dhikrRef.current.src = '')
     whiteNoiseRef.current?.pause()
+    whiteNoiseRef.current && (whiteNoiseRef.current.src = '')
   }, [story?.id])
 
   if (!story) {
@@ -118,7 +152,7 @@ export function StoryDetailPage() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto px-4 sm:px-5 pt-6 sm:pt-8 pb-40 sm:pb-44">
+    <main className="max-w-4xl mx-auto px-4 sm:px-5 pt-6 sm:pt-8 pb-44 sm:pb-48">
       <Link
         to="/stories"
         className="inline-block py-2 -my-1 text-sage-dark hover:text-sage text-sm mb-6 touch-manipulation"
@@ -150,78 +184,77 @@ export function StoryDetailPage() {
         </p>
       </div>
 
-      {/* Fixed bottom media player */}
+      {/* Fixed bottom media player - centered */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-cream border-t border-sage-light/30 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom)]">
         <div className="max-w-4xl mx-auto px-4 sm:px-5 py-3 sm:py-4">
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            {/* Prev / Play-Pause / Next */}
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={goPrev}
-                disabled={!prev}
-                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-sage-light/30 text-sage-dark disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation text-lg"
-                aria-label="Previous story"
-              >
-                ⏮
-              </button>
-              <button
-                type="button"
-                onClick={toggleNarration}
-                disabled={!hasNarration}
-                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-sage/30 text-sage-dark disabled:opacity-40 touch-manipulation text-lg"
-                aria-label={narrationPlaying ? 'Pause' : 'Play'}
-              >
-                {narrationPlaying ? '⏸' : '▶'}
-              </button>
-              <button
-                type="button"
-                onClick={goNext}
-                disabled={!next}
-                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-sage-light/30 text-sage-dark disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation text-lg"
-                aria-label="Next story"
-              >
-                ⏭
-              </button>
-            </div>
-            {/* Speed */}
+          {/* Row 1: Prev | Play-Pause | Next - centered */}
+          <div className="flex justify-center items-center gap-2 sm:gap-3 mb-3">
+            <button
+              type="button"
+              onClick={goPrev}
+              disabled={!prev}
+              className="min-h-[48px] min-w-[48px] flex items-center justify-center rounded-xl bg-sage-light/30 text-sage-dark disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation text-xl"
+              aria-label="Previous story"
+            >
+              ⏮
+            </button>
+            <button
+              type="button"
+              onClick={toggleNarration}
+              disabled={!hasNarration}
+              className="min-h-[52px] min-w-[52px] flex items-center justify-center rounded-xl bg-sage/30 text-sage-dark disabled:opacity-40 touch-manipulation text-2xl"
+              aria-label={narrationPlaying ? 'Pause' : 'Play'}
+            >
+              {narrationPlaying ? '⏸' : '▶'}
+            </button>
+            <button
+              type="button"
+              onClick={goNext}
+              disabled={!next}
+              className="min-h-[48px] min-w-[48px] flex items-center justify-center rounded-xl bg-sage-light/30 text-sage-dark disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation text-xl"
+              aria-label="Next story"
+            >
+              ⏭
+            </button>
+          </div>
+
+          {/* Row 2: Speed | Loop | Dhikr | White noise */}
+          <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={cycleSpeed}
-              className="min-h-[44px] px-3 sm:px-4 rounded-xl bg-sage-light/30 text-sage-dark text-sm font-medium touch-manipulation"
+              className="min-h-[44px] px-4 rounded-xl bg-sage-light/30 text-sage-dark text-sm font-medium touch-manipulation"
               title="Change narration speed"
             >
               {playbackRate}x
             </button>
-            {/* Dhikr toggle */}
             <button
               type="button"
-              onClick={toggleDhikr}
-              disabled={!hasDhikr}
-              className={`min-h-[44px] px-3 sm:px-4 rounded-xl text-sm font-medium touch-manipulation ${
-                dhikrOn
-                  ? 'bg-sage/40 text-sage-dark'
-                  : 'bg-sage-light/30 text-sage-dark disabled:opacity-40'
+              onClick={() => setLoopStory(!loopStory)}
+              className={`min-h-[44px] px-4 rounded-xl text-sm font-medium touch-manipulation ${
+                loopStory ? 'bg-sage/40 text-sage-dark' : 'bg-sage-light/30 text-sage-dark'
               }`}
-              aria-pressed={dhikrOn}
-              aria-label="Toggle dhikr"
+              aria-pressed={loopStory}
             >
-              Dhikr {dhikrOn ? 'On' : 'Off'}
+              Loop {loopStory ? 'On' : 'Off'}
             </button>
-            {/* White noise toggle */}
             <button
               type="button"
-              onClick={toggleWhiteNoise}
-              disabled={!hasWhiteNoise}
-              className={`min-h-[44px] px-3 sm:px-4 rounded-xl text-sm font-medium touch-manipulation ${
-                whiteNoiseOn
-                  ? 'bg-sage/40 text-sage-dark'
-                  : 'bg-sage-light/30 text-sage-dark disabled:opacity-40'
+              onClick={cycleDhikr}
+              className={`min-h-[44px] px-4 rounded-xl text-sm font-medium touch-manipulation ${
+                dhikrIndex >= 0 ? 'bg-sage/40 text-sage-dark' : 'bg-sage-light/30 text-sage-dark'
               }`}
-              aria-pressed={whiteNoiseOn}
-              aria-label="Toggle white noise"
             >
-              White noise {whiteNoiseOn ? 'On' : 'Off'}
+              Dhikr {dhikrIndex < 0 ? 'Off' : dhikrIndex + 1}
+            </button>
+            <button
+              type="button"
+              onClick={cycleWhiteNoise}
+              className={`min-h-[44px] px-4 rounded-xl text-sm font-medium touch-manipulation ${
+                whiteNoiseIndex >= 0 ? 'bg-sage/40 text-sage-dark' : 'bg-sage-light/30 text-sage-dark'
+              }`}
+            >
+              White noise {whiteNoiseIndex < 0 ? 'Off' : whiteNoiseIndex + 1}
             </button>
           </div>
         </div>
@@ -236,24 +269,8 @@ export function StoryDetailPage() {
           onPause={() => setNarrationPlaying(false)}
         />
       )}
-      {hasDhikr && (
-        <audio
-          ref={dhikrRef}
-          src={story.dhikrUrl!}
-          loop
-          onPlay={() => setDhikrOn(true)}
-          onPause={() => setDhikrOn(false)}
-        />
-      )}
-      {hasWhiteNoise && (
-        <audio
-          ref={whiteNoiseRef}
-          src={story.whiteNoiseUrl!}
-          loop
-          onPlay={() => setWhiteNoiseOn(true)}
-          onPause={() => setWhiteNoiseOn(false)}
-        />
-      )}
+      <audio ref={dhikrRef} loop />
+      <audio ref={whiteNoiseRef} loop />
     </main>
   )
 }
