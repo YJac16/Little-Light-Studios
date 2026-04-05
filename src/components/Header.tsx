@@ -25,13 +25,21 @@ export function Header() {
             Calm Stories. Kind Learning.
           </p>
         </Link>
-        <nav className="flex justify-center gap-2 mt-6" aria-label="Main navigation">
+        <nav className="flex flex-wrap justify-center gap-2 mt-6" aria-label="Main navigation">
           <Link to="/videos" className={navLinkClass('/videos')}>
             Videos
           </Link>
           <Link to="/stories" className={navLinkClass('/stories', false)}>
             Stories
           </Link>
+          <a
+            href="https://little-muslim-hero.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center px-5 py-3 rounded-xl text-lg font-medium transition-colors duration-200 text-ink-muted hover:bg-cream-dark hover:text-ink touch-manipulation"
+          >
+            Games
+          </a>
         </nav>
       </div>
     </header>
