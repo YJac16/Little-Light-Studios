@@ -381,7 +381,7 @@ function StoryPlayer({ story }: { story: Story }) {
               type="button"
               onClick={cycleSpeed}
               className="min-h-[44px] rounded-xl bg-sage-muted/50 px-4 text-sm font-medium text-sage-dark"
-              title="Change narration speed"
+              aria-label={`Narration speed ${playbackRate} times. Activate to change.`}
             >
               {playbackRate}x
             </button>
@@ -392,6 +392,7 @@ function StoryPlayer({ story }: { story: Story }) {
                 loopStory ? 'bg-sage/40 text-sage-dark' : 'bg-sage-muted/50 text-sage-dark'
               }`}
               aria-pressed={loopStory}
+              aria-label={`Loop story ${loopStory ? 'on' : 'off'}`}
             >
               Loop {loopStory ? 'On' : 'Off'}
             </button>
@@ -401,6 +402,9 @@ function StoryPlayer({ story }: { story: Story }) {
               className={`min-h-[44px] rounded-xl px-4 text-sm font-medium ${
                 dhikrIndex >= 0 ? 'bg-sage/40 text-sage-dark' : 'bg-sage-muted/50 text-sage-dark'
               }`}
+              aria-label={
+                dhikrIndex < 0 ? 'Dhikr off. Activate to choose track 1.' : `Dhikr track ${dhikrIndex + 1} on. Activate to change.`
+              }
             >
               Dhikr {dhikrIndex < 0 ? 'Off' : dhikrIndex + 1}
             </button>
@@ -410,6 +414,11 @@ function StoryPlayer({ story }: { story: Story }) {
               className={`min-h-[44px] rounded-xl px-4 text-sm font-medium ${
                 whiteNoiseIndex >= 0 ? 'bg-sage/40 text-sage-dark' : 'bg-sage-muted/50 text-sage-dark'
               }`}
+              aria-label={
+                whiteNoiseIndex < 0
+                  ? 'White noise off. Activate to choose track 1.'
+                  : `White noise track ${whiteNoiseIndex + 1} on. Activate to change.`
+              }
             >
               White noise {whiteNoiseIndex < 0 ? 'Off' : whiteNoiseIndex + 1}
             </button>
@@ -419,7 +428,11 @@ function StoryPlayer({ story }: { story: Story }) {
               className={`min-h-[44px] rounded-xl px-4 text-sm font-medium ${
                 sleepMinutes > 0 ? 'bg-sage/40 text-sage-dark' : 'bg-sage-muted/50 text-sage-dark'
               }`}
-              title="Sleep timer with gentle fade-out"
+              aria-label={
+                sleepMinutes === 0
+                  ? 'Sleep timer off. Activate to set five minutes.'
+                  : `Sleep timer ${sleepMinutes} minutes remaining approximately. Activate to change.`
+              }
             >
               {sleepMinutes === 0
                 ? 'Timer Off'

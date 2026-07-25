@@ -19,9 +19,13 @@ export function HomePage() {
 
       <div className="relative z-10 mx-auto flex min-h-[calc(100dvh-8rem)] max-w-4xl flex-col items-center justify-center px-5 py-10 text-center sm:min-h-[calc(100dvh-9rem)] sm:py-16">
         <img
-          src="/Little_Light__Studios_Logo.jpg"
+          src="/logo-480.jpg"
           alt="Little Light Studios"
+          width={360}
+          height={200}
           className="mb-6 h-28 w-auto max-w-[min(88vw,360px)] object-contain drop-shadow-sm animate-fade-in sm:mb-8 sm:h-36 md:h-44"
+          fetchPriority="high"
+          decoding="async"
         />
 
         <p className="font-display text-sm font-semibold tracking-[0.18em] uppercase text-sage-dark animate-fade-up sm:text-base">

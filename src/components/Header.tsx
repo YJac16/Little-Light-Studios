@@ -24,9 +24,12 @@ export function Header() {
         {!isHome && (
           <Link to="/" className="mb-4 block text-center">
             <img
-              src="/Little_Light__Studios_Logo.jpg"
+              src="/logo-480.jpg"
               alt="Little Light Studios"
+              width={280}
+              height={160}
               className="mx-auto h-16 w-auto max-w-[220px] object-contain sm:h-20 sm:max-w-[280px]"
+              decoding="async"
             />
             <p className="mt-1 font-display text-sm text-ink-muted">Calm Stories. Kind Learning.</p>
           </Link>
