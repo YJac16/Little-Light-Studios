@@ -1,7 +1,7 @@
 {
   "name": "Little Light Studios",
   "short_name": "Little Light",
-  "description": "Calm Stories. Kind Learning.",
+  "description": "Calm Stories. Kind Learning. Gentle Islamic bedtime stories and kind learning for young children.",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
@@ -14,7 +14,8 @@
       "type": "image/png"
     }
   ],
-  "theme_color": "#faf8f5",
-  "background_color": "#faf8f5",
-  "display": "standalone"
+  "theme_color": "#e8f0f4",
+  "background_color": "#f2f7f9",
+  "display": "standalone",
+  "start_url": "/"
 }

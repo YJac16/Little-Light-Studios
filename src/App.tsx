@@ -4,6 +4,10 @@ import { HomePage } from './pages/HomePage'
 import { VideosPage } from './pages/VideosPage'
 import { StoriesPage } from './pages/StoriesPage'
 import { StoryDetailPage } from './pages/StoryDetailPage'
+import { AboutPage } from './pages/AboutPage'
+import { PrivacyPage } from './pages/PrivacyPage'
+import { ContactPage } from './pages/ContactPage'
+import { NotFoundPage } from './pages/NotFoundPage'
 
 function App() {
   return (
@@ -14,6 +18,10 @@ function App() {
           <Route path="videos" element={<VideosPage />} />
           <Route path="stories" element={<StoriesPage />} />
           <Route path="stories/:id" element={<StoryDetailPage />} />
+          <Route path="about" element={<AboutPage />} />
+          <Route path="privacy" element={<PrivacyPage />} />
+          <Route path="contact" element={<ContactPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
