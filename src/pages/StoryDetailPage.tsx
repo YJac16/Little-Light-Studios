@@ -3,18 +3,12 @@ import { useRef, useState, useEffect } from 'react'
 import storiesData from '../data/stories.json'
 import { READING_TIPS } from '../data/readingTips'
 import { DHIKR_OPTIONS, WHITE_NOISE_OPTIONS } from '../data/audioOptions'
-
-interface Story {
-  id: string
-  title: string
-  subtitle?: string
-  text: string
-  narrationUrl: string | null
-  dhikrUrl: string | null
-  whiteNoiseUrl: string | null
-}
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import type { Story } from '../types/story'
 
 const stories = storiesData as Story[]
+const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25]
+const TIMER_OPTIONS = [0, 5, 10, 15, 20] as const
 
 function findStory(id: string): Story | null {
   return stories.find((s) => s.id === id) ?? null
@@ -25,58 +19,119 @@ function getPrevNextIds(currentId: string): { prev: string | null; next: string 
   if (idx === -1) return { prev: null, next: null }
   return {
     prev: idx > 0 ? stories[idx - 1].id : null,
-    next: idx < stories.length - 1 && idx >= 0 ? stories[idx + 1].id : null,
+    next: idx < stories.length - 1 ? stories[idx + 1].id : null,
   }
 }
 
-const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25]
-
-// Dhikr index: -1 = off, 0 = option 1, 1 = option 2
-// White noise: same
-function cycleDhikrIndex(current: number): number {
+function cycleIndex(current: number, length: number): number {
   if (current < 0) return 0
-  if (current < DHIKR_OPTIONS.length - 1) return current + 1
+  if (current < length - 1) return current + 1
   return -1
 }
 
-function cycleWhiteNoiseIndex(current: number): number {
-  if (current < 0) return 0
-  if (current < WHITE_NOISE_OPTIONS.length - 1) return current + 1
-  return -1
+function formatTime(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return '0:00'
+  const m = Math.floor(seconds / 60)
+  const s = Math.floor(seconds % 60)
+  return `${m}:${s.toString().padStart(2, '0')}`
 }
 
 export function StoryDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
   const story = id ? findStory(id) : null
-  const { prev, next } = id ? getPrevNextIds(id) : { prev: null, next: null }
+  useDocumentTitle(story?.title ?? 'Story')
+
+  if (!story) {
+    return (
+      <main className="mx-auto max-w-4xl px-4 py-8">
+        <p className="text-ink-muted">Story not found.</p>
+        <Link to="/stories" className="mt-4 inline-block text-sage-dark hover:underline">
+          ← Back to Stories
+        </Link>
+      </main>
+    )
+  }
+
+  return <StoryPlayer key={story.id} story={story} />
+}
+
+function StoryPlayer({ story }: { story: Story }) {
+  const navigate = useNavigate()
+  const { prev, next } = getPrevNextIds(story.id)
 
   const narrationRef = useRef<HTMLAudioElement>(null)
   const dhikrRef = useRef<HTMLAudioElement>(null)
   const whiteNoiseRef = useRef<HTMLAudioElement>(null)
 
   const [narrationPlaying, setNarrationPlaying] = useState(false)
+  const [narrationAvailable, setNarrationAvailable] = useState(!!story.narrationUrl)
   const [loopStory, setLoopStory] = useState(false)
   const [dhikrIndex, setDhikrIndex] = useState(-1)
   const [whiteNoiseIndex, setWhiteNoiseIndex] = useState(-1)
   const [playbackRate, setPlaybackRate] = useState(1)
-
-  const hasNarration = !!story?.narrationUrl
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [sleepMinutes, setSleepMinutes] = useState(0)
+  const [sleepRemaining, setSleepRemaining] = useState<number | null>(null)
 
   useEffect(() => {
     const a = narrationRef.current
     if (a) a.playbackRate = playbackRate
   }, [playbackRate])
 
+  useEffect(() => {
+    const a = narrationRef.current
+    if (!a || !narrationAvailable) return
+    const onEnded = () => {
+      setNarrationPlaying(false)
+      if (loopStory) {
+        a.currentTime = 0
+        a.play().catch(() => {})
+      }
+    }
+    const onTime = () => setCurrentTime(a.currentTime)
+    const onMeta = () => setDuration(a.duration || 0)
+    a.addEventListener('ended', onEnded)
+    a.addEventListener('timeupdate', onTime)
+    a.addEventListener('loadedmetadata', onMeta)
+    return () => {
+      a.removeEventListener('ended', onEnded)
+      a.removeEventListener('timeupdate', onTime)
+      a.removeEventListener('loadedmetadata', onMeta)
+    }
+  }, [loopStory, narrationAvailable])
+
+  useEffect(() => {
+    if (sleepMinutes <= 0) return
+
+    const id = window.setInterval(() => {
+      setSleepRemaining((prev) => {
+        if (prev === null) return null
+        if (prev <= 1) {
+          narrationRef.current?.pause()
+          dhikrRef.current?.pause()
+          whiteNoiseRef.current?.pause()
+          setNarrationPlaying(false)
+          setSleepMinutes(0)
+          return null
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => window.clearInterval(id)
+  }, [sleepMinutes])
+
   const toggleNarration = () => {
     const audio = narrationRef.current
-    if (!audio) return
+    if (!audio || !narrationAvailable) return
     if (narrationPlaying) {
       audio.pause()
+      setNarrationPlaying(false)
     } else {
-      audio.play().catch(() => {})
+      audio.play().catch(() => setNarrationAvailable(false))
+      setNarrationPlaying(true)
     }
-    setNarrationPlaying(!narrationPlaying)
   }
 
   const goPrev = () => prev && navigate(`/stories/${prev}`)
@@ -93,7 +148,7 @@ export function StoryDetailPage() {
       audio.pause()
       audio.src = ''
     }
-    const nextIndex = cycleDhikrIndex(dhikrIndex)
+    const nextIndex = cycleIndex(dhikrIndex, DHIKR_OPTIONS.length)
     setDhikrIndex(nextIndex)
     if (nextIndex >= 0 && dhikrRef.current) {
       dhikrRef.current.src = DHIKR_OPTIONS[nextIndex]
@@ -107,7 +162,7 @@ export function StoryDetailPage() {
       audio.pause()
       audio.src = ''
     }
-    const nextIndex = cycleWhiteNoiseIndex(whiteNoiseIndex)
+    const nextIndex = cycleIndex(whiteNoiseIndex, WHITE_NOISE_OPTIONS.length)
     setWhiteNoiseIndex(nextIndex)
     if (nextIndex >= 0 && whiteNoiseRef.current) {
       whiteNoiseRef.current.src = WHITE_NOISE_OPTIONS[nextIndex]
@@ -115,85 +170,83 @@ export function StoryDetailPage() {
     }
   }
 
-  useEffect(() => {
-    const a = narrationRef.current
-    if (!a || !hasNarration) return
-    const onEnded = () => {
-      setNarrationPlaying(false)
-      if (loopStory) {
-        a.currentTime = 0
-        a.play().catch(() => {})
-      }
-    }
-    a.addEventListener('ended', onEnded)
-    return () => a.removeEventListener('ended', onEnded)
-  }, [loopStory, hasNarration])
+  const cycleTimer = () => {
+    const i = TIMER_OPTIONS.indexOf(sleepMinutes as (typeof TIMER_OPTIONS)[number])
+    const next = TIMER_OPTIONS[(i + 1) % TIMER_OPTIONS.length]
+    setSleepMinutes(next)
+    setSleepRemaining(next > 0 ? next * 60 : null)
+  }
 
-  useEffect(() => {
-    setNarrationPlaying(false)
-    setDhikrIndex(-1)
-    setWhiteNoiseIndex(-1)
-    narrationRef.current?.pause()
-    dhikrRef.current?.pause()
-    dhikrRef.current && (dhikrRef.current.src = '')
-    whiteNoiseRef.current?.pause()
-    whiteNoiseRef.current && (whiteNoiseRef.current.src = '')
-  }, [story?.id])
-
-  if (!story) {
-    return (
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <p className="text-ink-muted">Story not found.</p>
-        <Link to="/stories" className="text-sage-dark hover:underline mt-4 inline-block">
-          ← Back to Stories
-        </Link>
-      </main>
-    )
+  const onScrub = (value: number) => {
+    const audio = narrationRef.current
+    if (!audio || !narrationAvailable) return
+    audio.currentTime = value
+    setCurrentTime(value)
   }
 
   return (
-    <main className="max-w-4xl mx-auto px-4 sm:px-5 pt-6 sm:pt-8 pb-44 sm:pb-48">
+    <main className="mx-auto max-w-4xl px-4 pb-52 pt-6 sm:px-5 sm:pb-56 sm:pt-8">
       <Link
         to="/stories"
-        className="inline-block py-2 -my-1 text-sage-dark hover:text-sage text-sm mb-6 touch-manipulation"
+        className="-my-1 mb-6 inline-block py-2 text-sm font-medium text-sage-dark hover:text-sage"
       >
         ← Back to Stories
       </Link>
 
-      {/* Reading tips */}
-      <div className="rounded-2xl bg-lavender-light/40 border border-lavender-light p-4 sm:p-5 mb-6">
-        <h3 className="font-medium text-ink mb-2">{READING_TIPS.title}</h3>
-        <ul className="text-sm text-ink-muted space-y-1 list-disc list-inside">
-          {READING_TIPS.items.map((item, i) => (
-            <li key={i}>{item}</li>
+      <div className="mb-6 rounded-2xl border border-dawn/40 bg-dawn-soft/50 p-4 sm:p-5">
+        <h2 className="font-display font-semibold text-ink">{READING_TIPS.title}</h2>
+        <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-ink-muted">
+          {READING_TIPS.items.map((item) => (
+            <li key={item}>{item}</li>
           ))}
         </ul>
       </div>
 
-      <h1 className="text-2xl md:text-3xl font-serif font-semibold text-ink mb-1">
-        {story.title}
-      </h1>
-      {story.subtitle && (
-        <p className="text-ink-muted text-sm mb-6">{story.subtitle}</p>
+      <h1 className="font-display text-2xl font-semibold text-ink md:text-3xl">{story.title}</h1>
+      {story.subtitle && <p className="mt-1 text-sm text-ink-muted">{story.subtitle}</p>}
+
+      {!narrationAvailable && (
+        <p className="mt-4 rounded-xl bg-sand px-3 py-2 text-sm text-ink-muted">
+          Narration is not available yet — this is a read-aloud story. Dim the lights and take it slow.
+        </p>
       )}
 
-      {/* Story text */}
-      <div className="bg-white rounded-2xl border border-sage-light/30 p-5 sm:p-6 md:p-8 overflow-y-auto overflow-x-hidden overscroll-contain">
-        <p className="text-ink leading-relaxed whitespace-pre-wrap font-serif text-base md:text-lg">
+      <div className="mt-6 overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl border border-dawn/40 bg-white/85 p-5 sm:p-6 md:p-8">
+        <p className="whitespace-pre-wrap font-display text-base leading-relaxed text-ink md:text-lg">
           {story.text}
         </p>
       </div>
 
-      {/* Fixed bottom media player - centered */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-cream border-t border-sage-light/30 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom)]">
-        <div className="max-w-4xl mx-auto px-4 sm:px-5 py-3 sm:py-4">
-          {/* Row 1: Prev | Play-Pause | Next - centered */}
-          <div className="flex justify-center items-center gap-2 sm:gap-3 mb-3">
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-dawn/40 bg-mist-soft/95 shadow-[0_-4px_24px_rgba(47,58,54,0.08)] backdrop-blur-md pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto max-w-4xl px-4 py-3 sm:px-5 sm:py-4">
+          {narrationAvailable && (
+            <div className="mb-3">
+              <label className="sr-only" htmlFor="story-progress">
+                Story progress
+              </label>
+              <input
+                id="story-progress"
+                type="range"
+                min={0}
+                max={duration || 0}
+                step={0.1}
+                value={currentTime}
+                onChange={(e) => onScrub(Number(e.target.value))}
+                className="h-2 w-full cursor-pointer accent-sage-dark"
+              />
+              <div className="mt-1 flex justify-between text-xs text-ink-soft">
+                <span>{formatTime(currentTime)}</span>
+                <span>{formatTime(duration)}</span>
+              </div>
+            </div>
+          )}
+
+          <div className="mb-3 flex items-center justify-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={goPrev}
               disabled={!prev}
-              className="min-h-[48px] min-w-[48px] flex items-center justify-center rounded-xl bg-sage-light/30 text-sage-dark disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation text-xl"
+              className="flex min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-sage-muted/50 text-sage-dark disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Previous story"
             >
               ⏮
@@ -201,8 +254,8 @@ export function StoryDetailPage() {
             <button
               type="button"
               onClick={toggleNarration}
-              disabled={!hasNarration}
-              className="min-h-[52px] min-w-[52px] flex items-center justify-center rounded-xl bg-sage/30 text-sage-dark disabled:opacity-40 touch-manipulation text-2xl"
+              disabled={!narrationAvailable}
+              className="flex min-h-[52px] min-w-[52px] items-center justify-center rounded-xl bg-sage/35 text-2xl text-sage-dark disabled:opacity-40"
               aria-label={narrationPlaying ? 'Pause' : 'Play'}
             >
               {narrationPlaying ? '⏸' : '▶'}
@@ -211,19 +264,18 @@ export function StoryDetailPage() {
               type="button"
               onClick={goNext}
               disabled={!next}
-              className="min-h-[48px] min-w-[48px] flex items-center justify-center rounded-xl bg-sage-light/30 text-sage-dark disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation text-xl"
+              className="flex min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-sage-muted/50 text-sage-dark disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Next story"
             >
               ⏭
             </button>
           </div>
 
-          {/* Row 2: Speed | Loop | Dhikr | White noise */}
-          <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={cycleSpeed}
-              className="min-h-[44px] px-4 rounded-xl bg-sage-light/30 text-sage-dark text-sm font-medium touch-manipulation"
+              className="min-h-[44px] rounded-xl bg-sage-muted/50 px-4 text-sm font-medium text-sage-dark"
               title="Change narration speed"
             >
               {playbackRate}x
@@ -231,8 +283,8 @@ export function StoryDetailPage() {
             <button
               type="button"
               onClick={() => setLoopStory(!loopStory)}
-              className={`min-h-[44px] px-4 rounded-xl text-sm font-medium touch-manipulation ${
-                loopStory ? 'bg-sage/40 text-sage-dark' : 'bg-sage-light/30 text-sage-dark'
+              className={`min-h-[44px] rounded-xl px-4 text-sm font-medium ${
+                loopStory ? 'bg-sage/40 text-sage-dark' : 'bg-sage-muted/50 text-sage-dark'
               }`}
               aria-pressed={loopStory}
             >
@@ -241,8 +293,8 @@ export function StoryDetailPage() {
             <button
               type="button"
               onClick={cycleDhikr}
-              className={`min-h-[44px] px-4 rounded-xl text-sm font-medium touch-manipulation ${
-                dhikrIndex >= 0 ? 'bg-sage/40 text-sage-dark' : 'bg-sage-light/30 text-sage-dark'
+              className={`min-h-[44px] rounded-xl px-4 text-sm font-medium ${
+                dhikrIndex >= 0 ? 'bg-sage/40 text-sage-dark' : 'bg-sage-muted/50 text-sage-dark'
               }`}
             >
               Dhikr {dhikrIndex < 0 ? 'Off' : dhikrIndex + 1}
@@ -250,23 +302,41 @@ export function StoryDetailPage() {
             <button
               type="button"
               onClick={cycleWhiteNoise}
-              className={`min-h-[44px] px-4 rounded-xl text-sm font-medium touch-manipulation ${
-                whiteNoiseIndex >= 0 ? 'bg-sage/40 text-sage-dark' : 'bg-sage-light/30 text-sage-dark'
+              className={`min-h-[44px] rounded-xl px-4 text-sm font-medium ${
+                whiteNoiseIndex >= 0 ? 'bg-sage/40 text-sage-dark' : 'bg-sage-muted/50 text-sage-dark'
               }`}
             >
               White noise {whiteNoiseIndex < 0 ? 'Off' : whiteNoiseIndex + 1}
+            </button>
+            <button
+              type="button"
+              onClick={cycleTimer}
+              className={`min-h-[44px] rounded-xl px-4 text-sm font-medium ${
+                sleepMinutes > 0 ? 'bg-sage/40 text-sage-dark' : 'bg-sage-muted/50 text-sage-dark'
+              }`}
+              title="Sleep timer"
+            >
+              {sleepMinutes === 0
+                ? 'Timer Off'
+                : sleepRemaining !== null
+                  ? `Timer ${formatTime(sleepRemaining)}`
+                  : `Timer ${sleepMinutes}m`}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Hidden audio elements */}
-      {hasNarration && (
+      {story.narrationUrl && narrationAvailable && (
         <audio
           ref={narrationRef}
-          src={story.narrationUrl!}
+          src={story.narrationUrl}
+          preload="metadata"
           onPlay={() => setNarrationPlaying(true)}
           onPause={() => setNarrationPlaying(false)}
+          onError={() => {
+            setNarrationAvailable(false)
+            setNarrationPlaying(false)
+          }}
         />
       )}
       <audio ref={dhikrRef} loop />
