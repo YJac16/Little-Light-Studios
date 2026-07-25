@@ -3,6 +3,7 @@ import { useRef, useState, useEffect } from 'react'
 import storiesData from '../data/stories.json'
 import { READING_TIPS } from '../data/readingTips'
 import { DHIKR_OPTIONS, WHITE_NOISE_OPTIONS } from '../data/audioOptions'
+import { StoryCover } from '../components/StoryCover'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import type { Story } from '../types/story'
 
@@ -192,6 +193,8 @@ function StoryPlayer({ story }: { story: Story }) {
       >
         ← Back to Stories
       </Link>
+
+      <StoryCover theme={story.cover} title={story.title} size="lg" className="mb-6" />
 
       <div className="mb-6 rounded-2xl border border-dawn/40 bg-dawn-soft/50 p-4 sm:p-5">
         <h2 className="font-display font-semibold text-ink">{READING_TIPS.title}</h2>

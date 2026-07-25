@@ -1,21 +1,29 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { VideoCard } from '../components/VideoCard'
 import { VideoModal } from '../components/VideoModal'
 import videosData from '../data/videos.json'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
-
-interface Video {
-  id: string
-  title: string
-  thumbnail: string
-  youtubeId: string
-  description?: string
-}
+import {
+  VIDEO_GROUP_LABELS,
+  VIDEO_GROUP_ORDER,
+  type Video,
+  type VideoGroup,
+} from '../types/video'
 
 export function VideosPage() {
   useDocumentTitle('Videos')
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null)
   const videos = videosData as Video[]
+
+  const groups = useMemo(() => {
+    const present = VIDEO_GROUP_ORDER.filter((group) => videos.some((v) => v.group === group))
+    return present.map((group) => ({
+      group,
+      items: videos.filter((v) => v.group === group),
+    }))
+  }, [videos])
+
+  const showGroupHeadings = groups.length > 1
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-6 sm:px-5 sm:py-10">
@@ -35,15 +43,29 @@ export function VideosPage() {
         </p>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
-        {videos.map((video) => (
-          <VideoCard
-            key={video.id}
-            title={video.title}
-            description={video.description}
-            thumbnail={video.thumbnail}
-            onClick={() => setSelectedVideo(video)}
-          />
+      <div className="space-y-10">
+        {groups.map(({ group, items }) => (
+          <section key={group} aria-labelledby={showGroupHeadings ? `video-group-${group}` : undefined}>
+            {showGroupHeadings && (
+              <h2
+                id={`video-group-${group}`}
+                className="mb-4 font-display text-lg font-semibold text-sage-dark"
+              >
+                {VIDEO_GROUP_LABELS[group as VideoGroup]}
+              </h2>
+            )}
+            <div className="grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
+              {items.map((video) => (
+                <VideoCard
+                  key={video.id}
+                  title={video.title}
+                  description={video.description}
+                  thumbnail={video.thumbnail}
+                  onClick={() => setSelectedVideo(video)}
+                />
+              ))}
+            </div>
+          </section>
         ))}
       </div>
 

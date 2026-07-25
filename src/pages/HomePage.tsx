@@ -33,7 +33,7 @@ export function HomePage() {
         </h1>
 
         <p className="mt-4 max-w-md text-base leading-relaxed text-ink-muted animate-fade-up-delayed sm:text-lg">
-          Gentle Islamic bedtime stories and peaceful learning for little hearts — made easy for parents.
+          Stories for rest and kind habits — gentle Islamic learning made easy for parents.
         </p>
 
         <div className="mt-8 flex w-full max-w-md flex-col gap-3 animate-fade-up-late sm:mt-10 sm:flex-row sm:justify-center">
