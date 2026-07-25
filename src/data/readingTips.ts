@@ -1,5 +1,5 @@
 export const READING_TIPS = {
-  title: '🌙 Reading tip for nap time',
+  title: 'Reading tip for nap time',
   items: [
     'Stretch each line',
     'Pause after In… and out…',
