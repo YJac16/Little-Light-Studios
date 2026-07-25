@@ -1,11 +1,18 @@
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useRef, useState, useEffect } from 'react'
 import storiesData from '../data/stories.json'
 import { READING_TIPS } from '../data/readingTips'
 import { DHIKR_OPTIONS, WHITE_NOISE_OPTIONS } from '../data/audioOptions'
 import { StoryCover } from '../components/StoryCover'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
-import type { Story } from '../types/story'
+import { fadeOutAudios, resetAudioVolumes, SLEEP_FADE_SECONDS } from '../lib/audioFade'
+import {
+  getTonightQueue,
+  setContinueListening,
+  clearContinueListening,
+  toggleQueueStory,
+} from '../lib/storage'
+import { AGE_BAND_LABELS, type Story } from '../types/story'
 
 const stories = storiesData as Story[]
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25]
@@ -58,11 +65,16 @@ export function StoryDetailPage() {
 
 function StoryPlayer({ story }: { story: Story }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const { prev, next } = getPrevNextIds(story.id)
+  const resumeAt = (location.state as { resumeAt?: number } | null)?.resumeAt
 
   const narrationRef = useRef<HTMLAudioElement>(null)
   const dhikrRef = useRef<HTMLAudioElement>(null)
   const whiteNoiseRef = useRef<HTMLAudioElement>(null)
+  const cancelFadeRef = useRef<(() => void) | null>(null)
+  const fadingRef = useRef(false)
+  const lastSaveRef = useRef(0)
 
   const [narrationPlaying, setNarrationPlaying] = useState(false)
   const [narrationAvailable, setNarrationAvailable] = useState(!!story.narrationUrl)
@@ -74,6 +86,10 @@ function StoryPlayer({ story }: { story: Story }) {
   const [duration, setDuration] = useState(0)
   const [sleepMinutes, setSleepMinutes] = useState(0)
   const [sleepRemaining, setSleepRemaining] = useState<number | null>(null)
+  const [fadingOut, setFadingOut] = useState(false)
+  const [inQueue, setInQueue] = useState(() => getTonightQueue().includes(story.id))
+
+  const allAudios = () => [narrationRef.current, dhikrRef.current, whiteNoiseRef.current]
 
   useEffect(() => {
     const a = narrationRef.current
@@ -83,14 +99,35 @@ function StoryPlayer({ story }: { story: Story }) {
   useEffect(() => {
     const a = narrationRef.current
     if (!a || !narrationAvailable) return
+    if (typeof resumeAt === 'number' && resumeAt > 0) {
+      const apply = () => {
+        a.currentTime = resumeAt
+        setCurrentTime(resumeAt)
+      }
+      if (a.readyState >= 1) apply()
+      else a.addEventListener('loadedmetadata', apply, { once: true })
+    }
+  }, [narrationAvailable, resumeAt])
+
+  useEffect(() => {
+    const a = narrationRef.current
+    if (!a || !narrationAvailable) return
     const onEnded = () => {
       setNarrationPlaying(false)
+      clearContinueListening(story.id)
       if (loopStory) {
         a.currentTime = 0
         a.play().catch(() => {})
       }
     }
-    const onTime = () => setCurrentTime(a.currentTime)
+    const onTime = () => {
+      setCurrentTime(a.currentTime)
+      const now = Date.now()
+      if (now - lastSaveRef.current > 4000) {
+        lastSaveRef.current = now
+        setContinueListening(story.id, a.currentTime)
+      }
+    }
     const onMeta = () => setDuration(a.duration || 0)
     a.addEventListener('ended', onEnded)
     a.addEventListener('timeupdate', onTime)
@@ -99,28 +136,57 @@ function StoryPlayer({ story }: { story: Story }) {
       a.removeEventListener('ended', onEnded)
       a.removeEventListener('timeupdate', onTime)
       a.removeEventListener('loadedmetadata', onMeta)
+      if (a.currentTime > 2) setContinueListening(story.id, a.currentTime)
     }
-  }, [loopStory, narrationAvailable])
+  }, [loopStory, narrationAvailable, story.id])
 
   useEffect(() => {
-    if (sleepMinutes <= 0) return
+    if (sleepMinutes <= 0) {
+      cancelFadeRef.current?.()
+      cancelFadeRef.current = null
+      fadingRef.current = false
+      resetAudioVolumes(allAudios())
+      return
+    }
 
     const id = window.setInterval(() => {
       setSleepRemaining((prev) => {
         if (prev === null) return null
+
+        if (prev <= SLEEP_FADE_SECONDS && !fadingRef.current) {
+          fadingRef.current = true
+          setFadingOut(true)
+          cancelFadeRef.current?.()
+          cancelFadeRef.current = fadeOutAudios(allAudios(), () => {
+            setNarrationPlaying(false)
+            setSleepMinutes(0)
+            setSleepRemaining(null)
+            fadingRef.current = false
+            setFadingOut(false)
+            resetAudioVolumes(allAudios())
+          })
+        }
+
         if (prev <= 1) {
+          cancelFadeRef.current?.()
+          cancelFadeRef.current = null
           narrationRef.current?.pause()
           dhikrRef.current?.pause()
           whiteNoiseRef.current?.pause()
+          resetAudioVolumes(allAudios())
           setNarrationPlaying(false)
           setSleepMinutes(0)
+          fadingRef.current = false
+          setFadingOut(false)
           return null
         }
         return prev - 1
       })
     }, 1000)
 
-    return () => window.clearInterval(id)
+    return () => {
+      window.clearInterval(id)
+    }
   }, [sleepMinutes])
 
   const toggleNarration = () => {
@@ -129,7 +195,9 @@ function StoryPlayer({ story }: { story: Story }) {
     if (narrationPlaying) {
       audio.pause()
       setNarrationPlaying(false)
+      setContinueListening(story.id, audio.currentTime)
     } else {
+      resetAudioVolumes([audio])
       audio.play().catch(() => setNarrationAvailable(false))
       setNarrationPlaying(true)
     }
@@ -153,6 +221,7 @@ function StoryPlayer({ story }: { story: Story }) {
     setDhikrIndex(nextIndex)
     if (nextIndex >= 0 && dhikrRef.current) {
       dhikrRef.current.src = DHIKR_OPTIONS[nextIndex]
+      dhikrRef.current.volume = 1
       dhikrRef.current.play().catch(() => {})
     }
   }
@@ -167,11 +236,17 @@ function StoryPlayer({ story }: { story: Story }) {
     setWhiteNoiseIndex(nextIndex)
     if (nextIndex >= 0 && whiteNoiseRef.current) {
       whiteNoiseRef.current.src = WHITE_NOISE_OPTIONS[nextIndex]
+      whiteNoiseRef.current.volume = 1
       whiteNoiseRef.current.play().catch(() => {})
     }
   }
 
   const cycleTimer = () => {
+    cancelFadeRef.current?.()
+    cancelFadeRef.current = null
+    fadingRef.current = false
+    setFadingOut(false)
+    resetAudioVolumes(allAudios())
     const i = TIMER_OPTIONS.indexOf(sleepMinutes as (typeof TIMER_OPTIONS)[number])
     const next = TIMER_OPTIONS[(i + 1) % TIMER_OPTIONS.length]
     setSleepMinutes(next)
@@ -183,6 +258,12 @@ function StoryPlayer({ story }: { story: Story }) {
     if (!audio || !narrationAvailable) return
     audio.currentTime = value
     setCurrentTime(value)
+    setContinueListening(story.id, value)
+  }
+
+  const onToggleQueue = () => {
+    const next = toggleQueueStory(story.id)
+    setInQueue(next.includes(story.id))
   }
 
   return (
@@ -205,12 +286,33 @@ function StoryPlayer({ story }: { story: Story }) {
         </ul>
       </div>
 
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <span className="rounded-lg bg-sage-muted/50 px-2.5 py-1 text-xs font-semibold text-sage-dark">
+          {AGE_BAND_LABELS[story.ageBand]}
+        </span>
+        <button
+          type="button"
+          onClick={onToggleQueue}
+          className={`min-h-[36px] rounded-lg px-3 text-xs font-semibold transition ${
+            inQueue ? 'bg-sage-dark text-white' : 'bg-white border border-dawn/50 text-ink-muted'
+          }`}
+        >
+          {inQueue ? 'In tonight’s queue' : 'Add to tonight’s queue'}
+        </button>
+      </div>
+
       <h1 className="font-display text-2xl font-semibold text-ink md:text-3xl">{story.title}</h1>
       {story.subtitle && <p className="mt-1 text-sm text-ink-muted">{story.subtitle}</p>}
 
       {!narrationAvailable && (
         <p className="mt-4 rounded-xl bg-sand px-3 py-2 text-sm text-ink-muted">
           Narration is not available yet — this is a read-aloud story. Dim the lights and take it slow.
+        </p>
+      )}
+
+      {fadingOut && (
+        <p className="mt-4 rounded-xl bg-dawn-soft px-3 py-2 text-sm text-sage-dark">
+          Sleep timer fading out gently…
         </p>
       )}
 
@@ -317,7 +419,7 @@ function StoryPlayer({ story }: { story: Story }) {
               className={`min-h-[44px] rounded-xl px-4 text-sm font-medium ${
                 sleepMinutes > 0 ? 'bg-sage/40 text-sage-dark' : 'bg-sage-muted/50 text-sage-dark'
               }`}
-              title="Sleep timer"
+              title="Sleep timer with gentle fade-out"
             >
               {sleepMinutes === 0
                 ? 'Timer Off'

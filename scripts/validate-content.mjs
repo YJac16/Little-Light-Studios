@@ -8,6 +8,7 @@ const videosPath = join(root, 'src/data/videos.json')
 const audioDir = join(root, 'public/audio')
 
 const STORY_CATEGORIES = new Set(['prophets', 'nap', 'kind-habits'])
+const AGE_BANDS = new Set(['nap', 'bedtime', 'anytime'])
 const COVER_THEMES = new Set([
   'kindness',
   'stars',
@@ -56,11 +57,14 @@ if (Array.isArray(stories)) {
     if (ids.has(story.id)) errors.push(`Duplicate story id: ${story.id}`)
     ids.add(story.id)
 
-    for (const field of ['title', 'text', 'category', 'cover']) {
+    for (const field of ['title', 'text', 'category', 'cover', 'ageBand']) {
       if (!story[field]) errors.push(`Story ${story.id} missing ${field}`)
     }
     if (story.category && !STORY_CATEGORIES.has(story.category)) {
       errors.push(`Story ${story.id} has invalid category: ${story.category}`)
+    }
+    if (story.ageBand && !AGE_BANDS.has(story.ageBand)) {
+      errors.push(`Story ${story.id} has invalid ageBand: ${story.ageBand}`)
     }
     if (story.cover && !COVER_THEMES.has(story.cover)) {
       errors.push(`Story ${story.id} has invalid cover: ${story.cover}`)

@@ -14,7 +14,12 @@ export function PrivacyPage() {
         </p>
         <p>
           This site is a static experience: stories and pages load in your browser. We do not run child-facing
-          chat, profiles, or behavioral advertising.
+          chat, profiles, or behavioral advertising. Optional features like “Tonight’s queue” and continue
+          listening stay on your device in local storage — they are not uploaded to a server.
+        </p>
+        <p>
+          You can install the site as an app for offline story text and cached audio. We do not use analytics
+          that track children.
         </p>
         <p>
           Videos open via YouTube embeds. When you play a video, YouTube may collect data under its own

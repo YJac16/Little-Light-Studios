@@ -47,6 +47,7 @@ Edit [`src/data/stories.json`](src/data/stories.json). Each story supports:
 | `id` | URL slug (`/stories/:id`) |
 | `title`, `subtitle`, `blurb` | Parent-facing labels |
 | `category` | `prophets`, `nap`, or `kind-habits` |
+| `ageBand` | `nap`, `bedtime`, or `anytime` |
 | `cover` | Theme key for SVG cover art (see `StoryCover`) |
 | `text` | Full story body |
 | `narrationUrl` | `/audio/[id]-narration.mp3`, or `null` for read-aloud only |
@@ -123,23 +124,29 @@ Games link out to [Little Muslim Hero](https://little-muslim-hero.vercel.app/) (
 
 Brand-first home, trust pages, SEO basics, story categories, sleep timer + scrubber, original Little Light characters (no third-party IP), normalized audio paths, curated video entry.
 
-### Phase 1 — Library completeness (in progress)
+### Phase 1 — Library completeness (mostly done)
 
 - [x] Grow to 16 original stories (Prophets, Nap, Kind Habits)
 - [x] Cover illustrations (SVG themes via `StoryCover`)
 - [x] Content validation script (`npm run validate:content`)
 - [x] Video grouping ready for catalog growth
-- [ ] Narrations for every story (parent-recorded MP3s — see checklist above)
+- [ ] Narrations for every story (add MP3s on desktop — see checklist above)
 - [ ] Expand video catalog (10+) as the YouTube channel grows
 
-### Phase 2 — Competitive hub features (still no accounts)
+### Phase 2 — Competitive hub features (done)
 
-- Sleep-timer fade-out for narration + ambience
-- Local playlists / “Tonight’s queue” (`localStorage`)
-- Continue listening (last-played story)
-- Search/filter by category and age band
-- Installable PWA with offline story text + key audio
-- Optional privacy-respecting analytics (no child tracking)
+- [x] Sleep-timer fade-out for narration + ambience (last 30s)
+- [x] Tonight’s queue (`localStorage`, `/tonight`)
+- [x] Continue listening (resume position on this device)
+- [x] Search + filter by category and age band
+- [x] Installable PWA (app shell offline; `/audio/*` cached on first play)
+- Analytics deferred (privacy-first; no child tracking)
+
+### Parent features (no account)
+
+- **Tonight’s queue** — add stories from any story page; reorder on `/tonight`
+- **Continue listening** — resume banner on Stories
+- **Sleep timer** — 5/10/15/20 minutes with gentle fade-out
 
 ### Phase 3 — Reach & durability
 

@@ -42,6 +42,9 @@ export function Header() {
           <Link to="/stories" className={navLinkClass('/stories', false)}>
             Stories
           </Link>
+          <Link to="/tonight" className={navLinkClass('/tonight')}>
+            Tonight
+          </Link>
           <Link to="/videos" className={navLinkClass('/videos')}>
             Videos
           </Link>

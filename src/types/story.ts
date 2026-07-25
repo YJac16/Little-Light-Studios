@@ -1,5 +1,7 @@
 export type StoryCategory = 'prophets' | 'nap' | 'kind-habits'
 
+export type AgeBand = 'nap' | 'bedtime' | 'anytime'
+
 export type CoverTheme =
   | 'kindness'
   | 'stars'
@@ -24,6 +26,7 @@ export interface Story {
   subtitle?: string
   blurb?: string
   category: StoryCategory
+  ageBand: AgeBand
   cover: CoverTheme
   text: string
   narrationUrl: string | null
@@ -35,4 +38,11 @@ export const CATEGORY_LABELS: Record<StoryCategory, string> = {
   'kind-habits': 'Kind habits',
 }
 
+export const AGE_BAND_LABELS: Record<AgeBand, string> = {
+  nap: 'Nap time',
+  bedtime: 'Bedtime',
+  anytime: 'Anytime',
+}
+
 export const CATEGORY_ORDER: StoryCategory[] = ['prophets', 'nap', 'kind-habits']
+export const AGE_BAND_ORDER: AgeBand[] = ['nap', 'bedtime', 'anytime']
