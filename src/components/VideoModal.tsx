@@ -28,7 +28,7 @@ export function VideoModal({ title, youtubeId, onClose }: VideoModalProps) {
       onClick={onClose}
     >
       <div
-        className="bg-cream rounded-t-2xl sm:rounded-2xl shadow-xl w-full sm:max-w-3xl max-h-[100dvh] sm:max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-cream rounded-t-3xl sm:rounded-3xl shadow-lift w-full sm:max-w-3xl max-h-[100dvh] sm:max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-sage-light/30 shrink-0">

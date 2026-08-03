@@ -129,17 +129,6 @@ export function StoryDetailPage() {
     return () => a.removeEventListener('ended', onEnded)
   }, [loopStory, hasNarration])
 
-  useEffect(() => {
-    setNarrationPlaying(false)
-    setDhikrIndex(-1)
-    setWhiteNoiseIndex(-1)
-    narrationRef.current?.pause()
-    dhikrRef.current?.pause()
-    dhikrRef.current && (dhikrRef.current.src = '')
-    whiteNoiseRef.current?.pause()
-    whiteNoiseRef.current && (whiteNoiseRef.current.src = '')
-  }, [story?.id])
-
   if (!story) {
     return (
       <main className="max-w-4xl mx-auto px-4 py-8">
@@ -152,41 +141,41 @@ export function StoryDetailPage() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto px-4 sm:px-5 pt-6 sm:pt-8 pb-44 sm:pb-48">
+    <main className="relative max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-52 sm:pb-48">
       <Link
         to="/stories"
-        className="inline-block py-2 -my-1 text-sage-dark hover:text-sage text-sm mb-6 touch-manipulation"
+        className="inline-flex items-center min-h-[44px] py-2 -my-1 text-sage-dark hover:text-sage text-sm font-sans font-semibold mb-6 touch-manipulation"
       >
         ← Back to Stories
       </Link>
 
       {/* Reading tips */}
-      <div className="rounded-2xl bg-lavender-light/40 border border-lavender-light p-4 sm:p-5 mb-6">
-        <h3 className="font-medium text-ink mb-2">{READING_TIPS.title}</h3>
-        <ul className="text-sm text-ink-muted space-y-1 list-disc list-inside">
+      <div className="rounded-3xl bg-lavender-light/35 border border-lavender-light/80 p-4 sm:p-5 mb-6">
+        <h3 className="font-display font-semibold text-ink mb-2">{READING_TIPS.title}</h3>
+        <ul className="text-sm text-ink-muted space-y-1 list-disc list-inside font-sans">
           {READING_TIPS.items.map((item, i) => (
             <li key={i}>{item}</li>
           ))}
         </ul>
       </div>
 
-      <h1 className="text-2xl md:text-3xl font-serif font-semibold text-ink mb-1">
+      <h1 className="text-2xl md:text-3xl font-display font-bold text-ink mb-1 leading-tight">
         {story.title}
       </h1>
       {story.subtitle && (
-        <p className="text-ink-muted text-sm mb-6">{story.subtitle}</p>
+        <p className="text-ink-muted text-sm mb-6 font-sans">{story.subtitle}</p>
       )}
 
       {/* Story text */}
-      <div className="bg-white rounded-2xl border border-sage-light/30 p-5 sm:p-6 md:p-8 overflow-y-auto overflow-x-hidden overscroll-contain">
-        <p className="text-ink leading-relaxed whitespace-pre-wrap font-serif text-base md:text-lg">
+      <div className="bg-white/90 rounded-3xl border border-sage-light/30 p-5 sm:p-6 md:p-8 overflow-y-auto overflow-x-hidden overscroll-contain shadow-soft">
+        <p className="text-ink leading-relaxed whitespace-pre-wrap font-sans text-base md:text-lg">
           {story.text}
         </p>
       </div>
 
       {/* Fixed bottom media player - centered */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-cream border-t border-sage-light/30 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom)]">
-        <div className="max-w-4xl mx-auto px-4 sm:px-5 py-3 sm:py-4">
+      <div className="fixed bottom-[calc(56px+env(safe-area-inset-bottom))] sm:bottom-0 left-0 right-0 z-40 bg-cream/95 backdrop-blur-md border-t border-sage-light/30 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] sm:pb-[env(safe-area-inset-bottom)]">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
           {/* Row 1: Prev | Play-Pause | Next - centered */}
           <div className="flex justify-center items-center gap-2 sm:gap-3 mb-3">
             <button

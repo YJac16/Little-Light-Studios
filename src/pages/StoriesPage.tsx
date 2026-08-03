@@ -4,28 +4,51 @@ import storiesData from '../data/stories.json'
 interface Story {
   id: string
   title: string
+  subtitle?: string
 }
 
 const stories = storiesData as Story[]
 
 export function StoriesPage() {
   return (
-    <main className="max-w-4xl mx-auto px-4 sm:px-5 py-6 sm:py-8">
-      <h2 className="text-xl font-serif font-medium text-ink mb-8">
-        Stories for Rest & Sleep
-      </h2>
-      <ul className="space-y-2">
-        {stories.map((story) => (
-          <li key={story.id}>
-            <Link
-              to={`/stories/${story.id}`}
-              className="block min-h-[56px] p-4 sm:p-5 rounded-xl bg-white border border-sage-light/30 hover:border-sage-light/50 hover:shadow-sm active:scale-[0.99] transition-all text-ink touch-manipulation"
+    <main className="relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 bg-dawn-mesh opacity-60" aria-hidden />
+      <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <header className="mb-8 sm:mb-10 text-center sm:text-left animate-rise">
+          <p className="text-sm font-sans font-semibold tracking-wide uppercase text-sage-dark mb-2">
+            Rest & sleep
+          </p>
+          <h1 className="font-display text-3xl sm:text-4xl text-ink leading-tight mb-3">
+            Stories for Rest & Sleep
+          </h1>
+          <p className="text-ink-muted text-base sm:text-lg max-w-xl mx-auto sm:mx-0 leading-relaxed">
+            Soft narrations and read-aloud moments for nap and bedtime.
+          </p>
+        </header>
+        <ul className="space-y-3">
+          {stories.map((story, i) => (
+            <li
+              key={story.id}
+              className="animate-rise"
+              style={{ animationDelay: `${50 + i * 40}ms` }}
             >
-              <span className="font-medium">{story.title}</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
+              <Link
+                to={`/stories/${story.id}`}
+                className="block min-h-[64px] p-4 sm:p-5 rounded-2xl bg-white/80 border border-sage-light/30 hover:border-sage-light/60 hover:shadow-soft active:scale-[0.99] transition-all text-ink touch-manipulation backdrop-blur-sm"
+              >
+                <span className="font-display text-lg sm:text-xl font-semibold block leading-snug">
+                  {story.title}
+                </span>
+                {story.subtitle && (
+                  <span className="mt-1 block text-sm text-ink-muted font-sans">
+                    {story.subtitle}
+                  </span>
+                )}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
     </main>
   )
 }

@@ -1,47 +1,188 @@
 import { Link, useLocation } from 'react-router-dom'
 
+const links = [
+  { to: '/videos', label: 'Videos', exact: true },
+  { to: '/stories', label: 'Stories', exact: false },
+  { to: '/games', label: 'Games', exact: true },
+] as const
+
+function isActivePath(pathname: string, path: string, exact: boolean) {
+  return exact
+    ? pathname === path
+    : pathname.startsWith(path + '/') || pathname === path
+}
+
 export function Header() {
   const location = useLocation()
+  const isHome = location.pathname === '/'
 
-  const isActive = (path: string, exact?: boolean) =>
-    exact ? location.pathname === path : location.pathname.startsWith(path + '/') || location.pathname === path
-  const navLinkClass = (path: string, exact = true) =>
-    `min-h-[44px] min-w-[44px] inline-flex items-center justify-center px-5 py-3 rounded-xl text-lg font-medium transition-colors duration-200 ${
-      isActive(path, exact)
-        ? 'bg-sage-light/40 text-sage-dark'
+  const navClass = (path: string, exact: boolean) =>
+    `min-h-[44px] inline-flex items-center justify-center px-4 sm:px-5 py-2.5 rounded-2xl text-base font-sans font-semibold transition-colors duration-200 touch-manipulation ${
+      isActivePath(location.pathname, path, exact)
+        ? 'bg-sage/25 text-sage-dark'
         : 'text-ink-muted hover:bg-cream-dark hover:text-ink'
     }`
 
   return (
-    <header className="bg-cream border-b border-sage-light/30 pt-[env(safe-area-inset-top)]">
-      <div className="max-w-4xl mx-auto px-4 sm:px-5 py-5 sm:py-6">
-        <Link to="/" className="block text-center">
-          <img
-            src="/Little_Light__Studios_Logo.jpg"
-            alt="Little Light Studios"
-            className="mx-auto h-20 sm:h-24 md:h-28 lg:h-32 w-auto max-w-[280px] sm:max-w-[340px] md:max-w-[400px] object-contain"
-          />
-          <p className="text-sm md:text-base text-ink-muted mt-1">
-            Calm Stories. Kind Learning.
-          </p>
-        </Link>
-        <nav className="flex flex-wrap justify-center gap-2 mt-6" aria-label="Main navigation">
-          <Link to="/videos" className={navLinkClass('/videos')}>
-            Videos
-          </Link>
-          <Link to="/stories" className={navLinkClass('/stories', false)}>
-            Stories
-          </Link>
-          <a
-            href="https://little-muslim-hero.vercel.app/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center px-5 py-3 rounded-xl text-lg font-medium transition-colors duration-200 text-ink-muted hover:bg-cream-dark hover:text-ink touch-manipulation"
+    <header
+      className={`sticky top-0 z-40 pt-[env(safe-area-inset-top)] backdrop-blur-md border-b transition-colors ${
+        isHome
+          ? 'bg-cream/75 border-transparent'
+          : 'bg-cream/90 border-sage-light/25'
+      }`}
+    >
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+        <div
+          className={`flex items-center gap-3 py-3 sm:py-4 ${
+            isHome ? 'justify-center' : 'justify-between'
+          }`}
+        >
+          {!isHome && (
+            <Link
+              to="/"
+              className="flex items-center gap-2.5 min-w-0 touch-manipulation group"
+              aria-label="Little Light Studios home"
+            >
+              <img
+                src="/Little_Light__Studios_Logo.jpg"
+                alt=""
+                className="h-11 sm:h-12 w-auto max-w-[140px] sm:max-w-[160px] object-contain rounded-lg group-hover:opacity-95 transition-opacity"
+              />
+              <span className="hidden md:block min-w-0">
+                <span className="block font-display text-lg text-ink leading-tight truncate">
+                  Little Light Studios
+                </span>
+                <span className="block text-xs text-ink-muted font-sans truncate">
+                  Calm Stories. Kind Learning.
+                </span>
+              </span>
+            </Link>
+          )}
+
+          {/* Desktop / tablet nav */}
+          <nav
+            className="hidden sm:flex flex-wrap justify-end gap-1"
+            aria-label="Main navigation"
           >
-            Games
-          </a>
-        </nav>
+            {isHome && (
+              <Link to="/" className={navClass('/', true)}>
+                Home
+              </Link>
+            )}
+            {links.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className={navClass(link.to, link.exact)}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Mobile: brand chip when not home (bottom tabs handle nav) */}
+          {isHome && (
+            <p className="sm:hidden sr-only">Little Light Studios</p>
+          )}
+        </div>
       </div>
     </header>
+  )
+}
+
+export function MobileTabBar() {
+  const location = useLocation()
+
+  const tabs = [
+    {
+      to: '/',
+      label: 'Home',
+      exact: true,
+      icon: (
+        <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" aria-hidden>
+          <path
+            d="M4 11.5L12 5l8 6.5V20a1 1 0 01-1 1h-5v-5H10v5H5a1 1 0 01-1-1v-8.5z"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ),
+    },
+    {
+      to: '/videos',
+      label: 'Videos',
+      exact: true,
+      icon: (
+        <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" aria-hidden>
+          <rect x="3" y="6" width="18" height="12" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+          <path d="M10 9.5v5l5-2.5-5-2.5z" fill="currentColor" />
+        </svg>
+      ),
+    },
+    {
+      to: '/stories',
+      label: 'Stories',
+      exact: false,
+      icon: (
+        <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" aria-hidden>
+          <path
+            d="M5 5h9a3 3 0 013 3v11H8a3 3 0 00-3 3V5z"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinejoin="round"
+          />
+          <path d="M5 5v17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      ),
+    },
+    {
+      to: '/games',
+      label: 'Games',
+      exact: true,
+      icon: (
+        <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" aria-hidden>
+          <path
+            d="M12 4.5l1.4 3.6 3.9.3-3 2.6.9 3.8L12 12.8 8.8 14.8l.9-3.8-3-2.6 3.9-.3L12 4.5z"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ),
+    },
+  ] as const
+
+  return (
+    <nav
+      className="sm:hidden fixed bottom-0 inset-x-0 z-50 border-t border-sage-light/30 bg-cream/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_24px_rgba(61,61,61,0.08)]"
+      aria-label="Mobile navigation"
+    >
+      <ul className="grid grid-cols-4 max-w-5xl mx-auto">
+        {tabs.map((tab) => {
+          const active = isActivePath(location.pathname, tab.to, tab.exact)
+          return (
+            <li key={tab.to}>
+              <Link
+                to={tab.to}
+                className={`flex flex-col items-center justify-center gap-0.5 min-h-[56px] px-1 py-2 text-[11px] font-sans font-semibold touch-manipulation transition-colors ${
+                  active ? 'text-sage-dark' : 'text-ink-muted'
+                }`}
+                aria-current={active ? 'page' : undefined}
+              >
+                <span
+                  className={`inline-flex items-center justify-center w-10 h-8 rounded-xl ${
+                    active ? 'bg-sage/25' : ''
+                  }`}
+                >
+                  {tab.icon}
+                </span>
+                {tab.label}
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+    </nav>
   )
 }
