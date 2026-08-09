@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { GameModal } from '../components/GameModal'
 import gamesData from '../data/games.json'
 
 interface Game {
@@ -37,14 +38,7 @@ const accentStyles: Record<Game['accent'], { soft: string; solid: string; glow: 
 
 export function GamesPage() {
   const games = gamesData as Game[]
-  const [openingId, setOpeningId] = useState<string | null>(null)
-
-  const openGame = (game: Game) => {
-    if (!game.url || game.status !== 'live') return
-    setOpeningId(game.id)
-    window.open(game.url, '_blank', 'noopener,noreferrer')
-    window.setTimeout(() => setOpeningId(null), 600)
-  }
+  const [selectedGame, setSelectedGame] = useState<Game | null>(null)
 
   return (
     <main className="relative overflow-hidden">
@@ -61,8 +55,8 @@ export function GamesPage() {
             Games
           </h1>
           <p className="text-ink-muted text-base sm:text-lg max-w-xl mx-auto sm:mx-0 leading-relaxed">
-            Browse our little adventures. Open a game when you are ready —
-            nothing launches until you choose one.
+            Browse our little adventures. Tap a game to open it here — just like
+            videos.
           </p>
         </header>
 
@@ -70,7 +64,6 @@ export function GamesPage() {
           {games.map((game, index) => {
             const styles = accentStyles[game.accent]
             const isLive = game.status === 'live' && !!game.url
-            const isOpening = openingId === game.id
 
             return (
               <li
@@ -81,28 +74,18 @@ export function GamesPage() {
                 {isLive ? (
                   <button
                     type="button"
-                    onClick={() => openGame(game)}
+                    onClick={() => setSelectedGame(game)}
                     className={`group relative w-full h-full text-left rounded-3xl overflow-hidden border border-white/70 bg-gradient-to-br ${styles.soft} shadow-soft hover:shadow-lift active:scale-[0.985] transition-all duration-300 touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2 focus-visible:ring-offset-cream min-h-[220px]`}
-                    aria-label={`Open ${game.title}`}
+                    aria-label={`View ${game.title}`}
                   >
-                    <GameCardBody
-                      game={game}
-                      styles={styles}
-                      isLive
-                      isOpening={isOpening}
-                    />
+                    <GameCardBody game={game} styles={styles} isLive />
                   </button>
                 ) : (
                   <div
                     className={`relative w-full h-full rounded-3xl overflow-hidden border border-white/60 bg-gradient-to-br ${styles.soft} opacity-90 min-h-[220px]`}
                     aria-label={`${game.title} — coming soon`}
                   >
-                    <GameCardBody
-                      game={game}
-                      styles={styles}
-                      isLive={false}
-                      isOpening={false}
-                    />
+                    <GameCardBody game={game} styles={styles} isLive={false} />
                   </div>
                 )}
               </li>
@@ -110,6 +93,17 @@ export function GamesPage() {
           })}
         </ul>
       </div>
+
+      {selectedGame?.url && (
+        <GameModal
+          title={selectedGame.title}
+          tagline={selectedGame.tagline}
+          description={selectedGame.description}
+          alsoKnownAs={selectedGame.alsoKnownAs}
+          url={selectedGame.url}
+          onClose={() => setSelectedGame(null)}
+        />
+      )}
     </main>
   )
 }
@@ -118,12 +112,10 @@ function GameCardBody({
   game,
   styles,
   isLive,
-  isOpening,
 }: {
   game: Game
   styles: { soft: string; solid: string; glow: string }
   isLive: boolean
-  isOpening: boolean
 }) {
   return (
     <div className="flex flex-col h-full p-5 sm:p-6">
@@ -164,7 +156,7 @@ function GameCardBody({
         <span
           className={`inline-flex items-center justify-center gap-2 min-h-[48px] px-4 rounded-2xl font-sans font-semibold text-sm ${styles.solid} group-hover:brightness-105 transition-all`}
         >
-          {isOpening ? 'Opening…' : 'Open game'}
+          View game
           <span aria-hidden className="text-lg leading-none group-hover:translate-x-0.5 transition-transform">
             →
           </span>

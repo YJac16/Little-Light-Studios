@@ -21,7 +21,7 @@ export function VideoModal({ title, youtubeId, onClose }: VideoModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 sm:bg-black/40 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
+      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 sm:bg-black/40 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="video-modal-title"
