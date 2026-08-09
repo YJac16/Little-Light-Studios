@@ -1,0 +1,30 @@
+[
+  {
+    "id": "little-muslim-hero",
+    "title": "Little Muslim Hero",
+    "alsoKnownAs": "Mualim Hero",
+    "tagline": "My Barakah Day",
+    "description": "Tap through morning, play, meals, helping, and bedtime with warm voices and happy choices.",
+    "url": "https://little-muslim-hero.vercel.app/",
+    "accent": "honey",
+    "status": "live"
+  },
+  {
+    "id": "starlight-paths",
+    "title": "Starlight Paths",
+    "tagline": "Coming soon",
+    "description": "A gentle matching adventure under a calm night sky — landing next.",
+    "url": null,
+    "accent": "sky",
+    "status": "coming-soon"
+  },
+  {
+    "id": "kindness-garden",
+    "title": "Kindness Garden",
+    "tagline": "Coming soon",
+    "description": "Plant kindness and watch little habits bloom — in the works.",
+    "url": null,
+    "accent": "sage",
+    "status": "coming-soon"
+  }
+]

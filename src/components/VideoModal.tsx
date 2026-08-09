@@ -21,14 +21,14 @@ export function VideoModal({ title, youtubeId, onClose }: VideoModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 sm:bg-black/40 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
+      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 sm:bg-black/40 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="video-modal-title"
       onClick={onClose}
     >
       <div
-        className="bg-cream rounded-t-2xl sm:rounded-2xl shadow-xl w-full sm:max-w-3xl max-h-[100dvh] sm:max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-cream rounded-t-3xl sm:rounded-3xl shadow-lift w-full sm:max-w-3xl max-h-[100dvh] sm:max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-sage-light/30 shrink-0">
