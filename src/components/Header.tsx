@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 const links = [
   { to: '/videos', label: 'Videos', exact: true },
   { to: '/stories', label: 'Stories', exact: false },
-  { to: '/games', label: 'Games', exact: true },
+  { to: '/games', label: 'Games', exact: false },
 ] as const
 
 function isActivePath(pathname: string, path: string, exact: boolean) {
@@ -14,61 +14,42 @@ function isActivePath(pathname: string, path: string, exact: boolean) {
 
 export function Header() {
   const location = useLocation()
-  const isHome = location.pathname === '/'
 
   const navClass = (path: string, exact: boolean) =>
-    `min-h-[44px] inline-flex items-center justify-center px-4 sm:px-5 py-2.5 rounded-2xl text-base font-sans font-semibold transition-colors duration-200 touch-manipulation ${
+    `min-h-[44px] inline-flex items-center justify-center px-4 sm:px-5 py-2.5 rounded-2xl text-sm sm:text-base font-sans font-semibold transition-all duration-200 touch-manipulation ${
       isActivePath(location.pathname, path, exact)
-        ? 'bg-sage/25 text-sage-dark'
-        : 'text-ink-muted hover:bg-cream-dark hover:text-ink'
+        ? 'bg-ink text-cream shadow-soft'
+        : 'text-ink-muted hover:bg-white/80 hover:text-ink'
     }`
 
   return (
-    <header
-      className={`sticky top-0 z-40 pt-[env(safe-area-inset-top)] backdrop-blur-md border-b transition-colors ${
-        isHome
-          ? 'bg-cream/75 border-transparent'
-          : 'bg-cream/90 border-sage-light/25'
-      }`}
-    >
+    <header className="sticky top-0 z-40 pt-[env(safe-area-inset-top)] bg-cream/85 backdrop-blur-xl border-b border-ink/5">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <div
-          className={`flex items-center gap-3 py-3 sm:py-4 ${
-            isHome ? 'justify-center' : 'justify-between'
-          }`}
-        >
-          {!isHome && (
-            <Link
-              to="/"
-              className="flex items-center gap-2.5 min-w-0 touch-manipulation group"
-              aria-label="Little Light Studios home"
-            >
-              <img
-                src="/Little_Light__Studios_Logo.jpg"
-                alt=""
-                className="h-11 sm:h-12 w-auto max-w-[140px] sm:max-w-[160px] object-contain rounded-lg group-hover:opacity-95 transition-opacity"
-              />
-              <span className="hidden md:block min-w-0">
-                <span className="block font-display text-lg text-ink leading-tight truncate">
-                  Little Light Studios
-                </span>
-                <span className="block text-xs text-ink-muted font-sans truncate">
-                  Calm Stories. Kind Learning.
-                </span>
+        <div className="flex items-center justify-between gap-3 py-3 sm:py-4">
+          <Link
+            to="/"
+            className="flex items-center gap-2.5 min-w-0 touch-manipulation group"
+            aria-label="Little Light Studios home"
+          >
+            <img
+              src="/Little_Light__Studios_Logo.jpg"
+              alt=""
+              className="h-10 sm:h-12 w-auto max-w-[120px] sm:max-w-[150px] object-contain rounded-xl group-hover:opacity-95 transition-opacity"
+            />
+            <span className="hidden md:block min-w-0">
+              <span className="block font-display text-lg text-ink leading-tight truncate">
+                Little Light Studios
               </span>
-            </Link>
-          )}
+              <span className="block text-xs text-ink-muted font-sans truncate">
+                Calm Stories. Kind Learning.
+              </span>
+            </span>
+          </Link>
 
-          {/* Desktop / tablet nav */}
           <nav
-            className="hidden sm:flex flex-wrap justify-end gap-1"
+            className="hidden sm:flex flex-wrap justify-end gap-1 p-1 rounded-2xl bg-white/55 border border-ink/5"
             aria-label="Main navigation"
           >
-            {isHome && (
-              <Link to="/" className={navClass('/', true)}>
-                Home
-              </Link>
-            )}
             {links.map((link) => (
               <Link
                 key={link.to}
@@ -79,11 +60,6 @@ export function Header() {
               </Link>
             ))}
           </nav>
-
-          {/* Mobile: brand chip when not home (bottom tabs handle nav) */}
-          {isHome && (
-            <p className="sm:hidden sr-only">Little Light Studios</p>
-          )}
         </div>
       </div>
     </header>
@@ -139,7 +115,7 @@ export function MobileTabBar() {
     {
       to: '/games',
       label: 'Games',
-      exact: true,
+      exact: false,
       icon: (
         <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" aria-hidden>
           <path
@@ -155,7 +131,7 @@ export function MobileTabBar() {
 
   return (
     <nav
-      className="sm:hidden fixed bottom-0 inset-x-0 z-50 border-t border-sage-light/30 bg-cream/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_24px_rgba(61,61,61,0.08)]"
+      className="sm:hidden fixed bottom-0 inset-x-0 z-50 border-t border-ink/8 bg-cream/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_28px_rgba(31,42,46,0.1)]"
       aria-label="Mobile navigation"
     >
       <ul className="grid grid-cols-4 max-w-5xl mx-auto">
@@ -165,14 +141,14 @@ export function MobileTabBar() {
             <li key={tab.to}>
               <Link
                 to={tab.to}
-                className={`flex flex-col items-center justify-center gap-0.5 min-h-[56px] px-1 py-2 text-[11px] font-sans font-semibold touch-manipulation transition-colors ${
-                  active ? 'text-sage-dark' : 'text-ink-muted'
+                className={`flex flex-col items-center justify-center gap-0.5 min-h-[58px] px-1 py-2 text-[11px] font-sans font-bold touch-manipulation transition-colors ${
+                  active ? 'text-ink' : 'text-ink-muted'
                 }`}
                 aria-current={active ? 'page' : undefined}
               >
                 <span
-                  className={`inline-flex items-center justify-center w-10 h-8 rounded-xl ${
-                    active ? 'bg-sage/25' : ''
+                  className={`inline-flex items-center justify-center w-11 h-8 rounded-xl ${
+                    active ? 'bg-honey-soft text-honey-deep' : ''
                   }`}
                 >
                   {tab.icon}
