@@ -1,6 +1,4 @@
 import { Link, useParams } from 'react-router-dom'
-import { useState } from 'react'
-import { GameModal } from '../components/GameModal'
 import gamesData from '../data/games.json'
 
 interface Game {
@@ -26,7 +24,6 @@ const accentPanel: Record<Game['accent'], string> = {
 export function GameDetailPage() {
   const { id } = useParams<{ id: string }>()
   const game = games.find((g) => g.id === id) ?? null
-  const [playing, setPlaying] = useState(false)
 
   if (!game) {
     return (
@@ -78,23 +75,14 @@ export function GameDetailPage() {
 
           <div className="flex flex-col sm:flex-row gap-3">
             {isLive ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setPlaying(true)}
-                  className="inline-flex items-center justify-center min-h-[52px] px-7 rounded-2xl bg-ink text-cream font-sans font-bold text-base shadow-lift hover:bg-ink/90 active:scale-[0.98] transition-all touch-manipulation"
-                >
-                  Play game
-                </button>
-                <a
-                  href={game.url!}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center min-h-[52px] px-7 rounded-2xl bg-white/80 border border-ink/10 text-ink font-sans font-semibold text-base hover:bg-white active:scale-[0.98] transition-all touch-manipulation"
-                >
-                  Open in new tab
-                </a>
-              </>
+              <a
+                href={game.url!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center min-h-[52px] px-7 rounded-2xl bg-ink text-cream font-sans font-bold text-base shadow-lift hover:bg-ink/90 active:scale-[0.98] transition-all touch-manipulation"
+              >
+                Play game
+              </a>
             ) : (
               <span className="inline-flex items-center justify-center min-h-[52px] px-7 rounded-2xl bg-white/60 text-ink-muted font-sans font-semibold text-base">
                 Coming soon
@@ -103,17 +91,6 @@ export function GameDetailPage() {
           </div>
         </article>
       </div>
-
-      {playing && game.url && (
-        <GameModal
-          title={game.title}
-          tagline={game.tagline}
-          description={game.description}
-          alsoKnownAs={game.alsoKnownAs}
-          url={game.url}
-          onClose={() => setPlaying(false)}
-        />
-      )}
     </main>
   )
 }

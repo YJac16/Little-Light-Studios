@@ -34,8 +34,8 @@ export function GamesPage() {
             Choose a game
           </h1>
           <p className="text-ink-muted text-base sm:text-lg max-w-xl leading-relaxed">
-            Browse the list first. Pick a game to see details — nothing launches
-            until you press Play.
+            Browse the list first. Pick a game to see details — Play opens the
+            game itself, with no on-site preview.
           </p>
         </header>
 
