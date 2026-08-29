@@ -24,6 +24,9 @@ export function Footer() {
             <Link to="/games" className="min-h-[44px] inline-flex items-center text-ink-muted hover:text-ink py-2 touch-manipulation">
               Games
             </Link>
+            <Link to="/about" className="min-h-[44px] inline-flex items-center text-ink-muted hover:text-ink py-2 touch-manipulation">
+              About
+            </Link>
           </nav>
         </div>
         <p className="mt-6 text-center sm:text-left text-ink-muted text-sm leading-relaxed font-sans">

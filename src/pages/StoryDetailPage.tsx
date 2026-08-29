@@ -3,6 +3,8 @@ import { useRef, useState, useEffect } from 'react'
 import storiesData from '../data/stories.json'
 import { READING_TIPS } from '../data/readingTips'
 import { DHIKR_OPTIONS, WHITE_NOISE_OPTIONS } from '../data/audioOptions'
+import { EmptyState } from '../components/EmptyState'
+import { formatTime, narrationPath, probeNarration } from '../lib/narration'
 
 interface Story {
   id: string
@@ -31,8 +33,6 @@ function getPrevNextIds(currentId: string): { prev: string | null; next: string 
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25]
 
-// Dhikr index: -1 = off, 0 = option 1, 1 = option 2
-// White noise: same
 function cycleDhikrIndex(current: number): number {
   if (current < 0) return 0
   if (current < DHIKR_OPTIONS.length - 1) return current + 1
@@ -47,36 +47,111 @@ function cycleWhiteNoiseIndex(current: number): number {
 
 export function StoryDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
   const story = id ? findStory(id) : null
-  const { prev, next } = id ? getPrevNextIds(id) : { prev: null, next: null }
+
+  if (!story) {
+    return (
+      <EmptyState
+        kicker="Stories"
+        title="This story is not here"
+        body="That story is not in the library. Open Stories to pick a nap or bedtime read."
+        actions={
+          <>
+            <Link
+              to="/stories"
+              className="inline-flex items-center justify-center min-h-[48px] px-6 rounded-2xl bg-ink text-cream font-sans font-bold touch-manipulation"
+            >
+              Back to Stories
+            </Link>
+            <Link
+              to="/"
+              className="inline-flex items-center justify-center min-h-[48px] px-6 rounded-2xl bg-white/85 text-ink font-sans font-bold border border-ink/10 touch-manipulation"
+            >
+              Home
+            </Link>
+          </>
+        }
+      />
+    )
+  }
+
+  return <StoryPlayer key={story.id} story={story} />
+}
+
+function StoryPlayer({ story }: { story: Story }) {
+  const navigate = useNavigate()
+  const { prev, next } = getPrevNextIds(story.id)
+  const narrationUrl = story.narrationUrl || narrationPath(story.id)
 
   const narrationRef = useRef<HTMLAudioElement>(null)
   const dhikrRef = useRef<HTMLAudioElement>(null)
   const whiteNoiseRef = useRef<HTMLAudioElement>(null)
 
+  const [audioStatus, setAudioStatus] = useState<'pending' | 'ready' | 'failed'>('pending')
   const [narrationPlaying, setNarrationPlaying] = useState(false)
   const [loopStory, setLoopStory] = useState(false)
   const [dhikrIndex, setDhikrIndex] = useState(-1)
   const [whiteNoiseIndex, setWhiteNoiseIndex] = useState(-1)
   const [playbackRate, setPlaybackRate] = useState(1)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
 
-  const hasNarration = !!story?.narrationUrl
+  const canPlay = audioStatus === 'ready'
+
+  useEffect(() => {
+    let cancelled = false
+
+    probeNarration(narrationUrl).then((ok) => {
+      if (!cancelled) setAudioStatus(ok ? 'ready' : 'failed')
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [narrationUrl])
 
   useEffect(() => {
     const a = narrationRef.current
     if (a) a.playbackRate = playbackRate
-  }, [playbackRate])
+  }, [playbackRate, audioStatus])
+
+  const markFailed = () => {
+    const audio = narrationRef.current
+    if (audio) {
+      audio.pause()
+      audio.currentTime = 0
+    }
+    setNarrationPlaying(false)
+    setCurrentTime(0)
+    setDuration(0)
+    setAudioStatus('failed')
+  }
+
+  const retryNarration = () => {
+    setAudioStatus('pending')
+    setNarrationPlaying(false)
+    setCurrentTime(0)
+    setDuration(0)
+    const audio = narrationRef.current
+    if (audio) {
+      audio.pause()
+      audio.load()
+    }
+    probeNarration(narrationUrl).then((ok) => {
+      setAudioStatus(ok ? 'ready' : 'failed')
+    })
+  }
 
   const toggleNarration = () => {
     const audio = narrationRef.current
-    if (!audio) return
+    if (!audio || !canPlay) return
     if (narrationPlaying) {
       audio.pause()
-    } else {
-      audio.play().catch(() => {})
+      return
     }
-    setNarrationPlaying(!narrationPlaying)
+    void audio.play().catch(() => {
+      markFailed()
+    })
   }
 
   const goPrev = () => prev && navigate(`/stories/${prev}`)
@@ -115,33 +190,15 @@ export function StoryDetailPage() {
     }
   }
 
-  useEffect(() => {
-    const a = narrationRef.current
-    if (!a || !hasNarration) return
-    const onEnded = () => {
-      setNarrationPlaying(false)
-      if (loopStory) {
-        a.currentTime = 0
-        a.play().catch(() => {})
-      }
-    }
-    a.addEventListener('ended', onEnded)
-    return () => a.removeEventListener('ended', onEnded)
-  }, [loopStory, hasNarration])
-
-  if (!story) {
-    return (
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <p className="text-ink-muted">Story not found.</p>
-        <Link to="/stories" className="text-sage-dark hover:underline mt-4 inline-block">
-          ← Back to Stories
-        </Link>
-      </main>
-    )
+  const onScrub = (value: number) => {
+    const audio = narrationRef.current
+    if (!audio || !canPlay) return
+    audio.currentTime = value
+    setCurrentTime(value)
   }
 
   return (
-    <main className="relative max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-52 sm:pb-48">
+    <main className="relative max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-64 sm:pb-56">
       <Link
         to="/stories"
         className="inline-flex items-center min-h-[44px] py-2 -my-1 text-sage-dark hover:text-sage text-sm font-sans font-semibold mb-6 touch-manipulation"
@@ -149,7 +206,6 @@ export function StoryDetailPage() {
         ← Back to Stories
       </Link>
 
-      {/* Reading tips */}
       <div className="rounded-3xl bg-lavender-light/35 border border-lavender-light/80 p-4 sm:p-5 mb-6">
         <h3 className="font-display font-semibold text-ink mb-2">{READING_TIPS.title}</h3>
         <ul className="text-sm text-ink-muted space-y-1 list-disc list-inside font-sans">
@@ -166,17 +222,56 @@ export function StoryDetailPage() {
         <p className="text-ink-muted text-sm mb-6 font-sans">{story.subtitle}</p>
       )}
 
-      {/* Story text */}
+      {audioStatus === 'failed' && (
+        <div
+          className="mb-6 rounded-2xl border border-honey/40 bg-honey-soft/60 px-4 py-3"
+          role="status"
+        >
+          <p className="font-sans font-semibold text-ink text-sm">Read aloud</p>
+          <p className="mt-1 text-sm text-ink-muted font-sans leading-relaxed">
+            Narration is not available yet. Read the story slowly, or retry if the
+            audio file was just added.
+          </p>
+          <button
+            type="button"
+            onClick={retryNarration}
+            className="mt-3 inline-flex min-h-[44px] items-center px-4 rounded-xl bg-white/80 text-sage-dark font-sans font-semibold text-sm touch-manipulation"
+          >
+            Retry audio
+          </button>
+        </div>
+      )}
+
       <div className="bg-white/90 rounded-3xl border border-sage-light/30 p-5 sm:p-6 md:p-8 overflow-y-auto overflow-x-hidden overscroll-contain shadow-soft">
         <p className="text-ink leading-relaxed whitespace-pre-wrap font-sans text-base md:text-lg">
           {story.text}
         </p>
       </div>
 
-      {/* Fixed bottom media player - centered */}
       <div className="fixed bottom-[calc(56px+env(safe-area-inset-bottom))] sm:bottom-0 left-0 right-0 z-40 bg-cream/95 backdrop-blur-md border-t border-sage-light/30 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] sm:pb-[env(safe-area-inset-bottom)]">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
-          {/* Row 1: Prev | Play-Pause | Next - centered */}
+          {canPlay && (
+            <div className="mb-3">
+              <label className="sr-only" htmlFor="story-progress">
+                Story progress
+              </label>
+              <input
+                id="story-progress"
+                type="range"
+                min={0}
+                max={duration || 0}
+                step={0.1}
+                value={Number.isFinite(currentTime) ? currentTime : 0}
+                onChange={(e) => onScrub(Number(e.target.value))}
+                className="h-2 w-full cursor-pointer accent-sage-dark"
+              />
+              <div className="mt-1 flex justify-between text-xs font-sans text-ink-muted">
+                <span>{formatTime(currentTime)}</span>
+                <span>{formatTime(duration)}</span>
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-center items-center gap-2 sm:gap-3 mb-3">
             <button
               type="button"
@@ -190,9 +285,17 @@ export function StoryDetailPage() {
             <button
               type="button"
               onClick={toggleNarration}
-              disabled={!hasNarration}
+              disabled={!canPlay}
               className="min-h-[52px] min-w-[52px] flex items-center justify-center rounded-xl bg-sage/30 text-sage-dark disabled:opacity-40 touch-manipulation text-2xl"
-              aria-label={narrationPlaying ? 'Pause' : 'Play'}
+              aria-label={
+                !canPlay
+                  ? audioStatus === 'pending'
+                    ? 'Checking narration'
+                    : 'Narration unavailable'
+                  : narrationPlaying
+                    ? 'Pause'
+                    : 'Play'
+              }
             >
               {narrationPlaying ? '⏸' : '▶'}
             </button>
@@ -207,7 +310,6 @@ export function StoryDetailPage() {
             </button>
           </div>
 
-          {/* Row 2: Speed | Loop | Dhikr | White noise */}
           <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-3">
             <button
               type="button"
@@ -249,13 +351,32 @@ export function StoryDetailPage() {
         </div>
       </div>
 
-      {/* Hidden audio elements */}
-      {hasNarration && (
+      {canPlay && (
         <audio
           ref={narrationRef}
-          src={story.narrationUrl!}
+          src={narrationUrl}
+          preload="metadata"
           onPlay={() => setNarrationPlaying(true)}
           onPause={() => setNarrationPlaying(false)}
+          onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+          onLoadedMetadata={(e) => {
+            const nextDuration = e.currentTarget.duration
+            if (!Number.isFinite(nextDuration) || nextDuration <= 0) {
+              markFailed()
+              return
+            }
+            setDuration(nextDuration)
+          }}
+          onError={markFailed}
+          onEnded={(e) => {
+            setNarrationPlaying(false)
+            if (loopStory) {
+              e.currentTarget.currentTime = 0
+              e.currentTarget.play().catch(() => {
+                markFailed()
+              })
+            }
+          }}
         />
       )}
       <audio ref={dhikrRef} loop />

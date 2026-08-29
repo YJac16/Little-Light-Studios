@@ -1,16 +1,6 @@
 import { Link } from 'react-router-dom'
 import gamesData from '../data/games.json'
-
-interface Game {
-  id: string
-  title: string
-  alsoKnownAs?: string
-  tagline: string
-  description: string
-  url: string | null
-  accent: 'honey' | 'sky' | 'sage' | 'lavender'
-  status: 'live' | 'coming-soon'
-}
+import type { Game } from '../types/game'
 
 const accentDot: Record<Game['accent'], string> = {
   honey: 'bg-honey',
@@ -34,7 +24,7 @@ export function GamesPage() {
             Choose a game
           </h1>
           <p className="text-ink-muted text-base sm:text-lg max-w-xl leading-relaxed">
-            Browse the list first. Pick a game to see details — Play opens the
+            Browse the list first. Pick a live game to see details — Play opens the
             game itself, with no on-site preview.
           </p>
         </header>
@@ -59,7 +49,6 @@ export function GamesPage() {
                   )}
                   <span className="mt-1 block text-sm text-ink-muted font-sans leading-relaxed">
                     {game.tagline}
-                    {!isLive ? ' · Coming soon' : ''}
                   </span>
                 </span>
                 <span
@@ -69,7 +58,7 @@ export function GamesPage() {
                       : 'bg-cream-dark text-ink-muted'
                   }`}
                 >
-                  {isLive ? 'View' : 'Soon'}
+                  {isLive ? 'View' : 'Coming soon'}
                 </span>
               </>
             )

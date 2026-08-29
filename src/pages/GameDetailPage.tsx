@@ -1,16 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 import gamesData from '../data/games.json'
-
-interface Game {
-  id: string
-  title: string
-  alsoKnownAs?: string
-  tagline: string
-  description: string
-  url: string | null
-  accent: 'honey' | 'sky' | 'sage' | 'lavender'
-  status: 'live' | 'coming-soon'
-}
+import { EmptyState } from '../components/EmptyState'
+import type { Game } from '../types/game'
 
 const games = gamesData as Game[]
 
@@ -27,15 +18,27 @@ export function GameDetailPage() {
 
   if (!game) {
     return (
-      <main className="relative max-w-5xl mx-auto px-4 sm:px-6 py-10">
-        <p className="text-ink-muted font-sans mb-4">Game not found.</p>
-        <Link
-          to="/games"
-          className="inline-flex min-h-[44px] items-center font-sans font-semibold text-sage-dark touch-manipulation"
-        >
-          ← Back to Games
-        </Link>
-      </main>
+      <EmptyState
+        kicker="Games"
+        title="This game is not here"
+        body="That game is not in the library yet. Browse the list for live play and honest coming-soon rows."
+        actions={
+          <>
+            <Link
+              to="/games"
+              className="inline-flex items-center justify-center min-h-[48px] px-6 rounded-2xl bg-ink text-cream font-sans font-bold touch-manipulation"
+            >
+              Back to Games
+            </Link>
+            <Link
+              to="/"
+              className="inline-flex items-center justify-center min-h-[48px] px-6 rounded-2xl bg-white/85 text-ink font-sans font-bold border border-ink/10 touch-manipulation"
+            >
+              Home
+            </Link>
+          </>
+        }
+      />
     )
   }
 

@@ -115,7 +115,10 @@ export function HomePage() {
             Pick a path
           </h2>
           <p className="text-center text-ink-muted text-sm sm:text-base mb-8 sm:mb-10 max-w-md mx-auto">
-            Three calm libraries. One tap to start.
+            Three calm libraries. One tap to start.{' '}
+            <Link to="/about" className="text-sage-dark font-semibold hover:text-ink">
+              About us
+            </Link>
           </p>
 
           <div className="grid gap-4 sm:gap-5 sm:grid-cols-3">
