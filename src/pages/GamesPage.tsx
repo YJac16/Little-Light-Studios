@@ -1,16 +1,7 @@
 import { Link } from 'react-router-dom'
 import gamesData from '../data/games.json'
-
-interface Game {
-  id: string
-  title: string
-  alsoKnownAs?: string
-  tagline: string
-  description: string
-  url: string | null
-  accent: 'honey' | 'sky' | 'sage' | 'lavender'
-  status: 'live' | 'coming-soon'
-}
+import { ManarMagnetArt } from '../components/ManarMagnetArt'
+import type { Game } from '../types/game'
 
 const accentDot: Record<Game['accent'], string> = {
   honey: 'bg-honey',
@@ -34,7 +25,7 @@ export function GamesPage() {
             Choose a game
           </h1>
           <p className="text-ink-muted text-base sm:text-lg max-w-xl leading-relaxed">
-            Browse the list first. Pick a game to see details — Play opens the
+            Browse the list first. Pick a live game to see details — Play opens the
             game itself, with no on-site preview.
           </p>
         </header>
@@ -44,13 +35,22 @@ export function GamesPage() {
             const isLive = game.status === 'live' && !!game.url
             const content = (
               <>
-                <span
-                  className={`mt-1.5 h-3 w-3 rounded-full shrink-0 ${accentDot[game.accent]}`}
-                  aria-hidden
-                />
+                {game.art === 'manar-magnet' ? (
+                  <ManarMagnetArt size="list" />
+                ) : (
+                  <span
+                    className={`mt-1.5 h-3 w-3 rounded-full shrink-0 ${accentDot[game.accent]}`}
+                    aria-hidden
+                  />
+                )}
                 <span className="min-w-0 flex-1">
                   <span className="font-display text-lg sm:text-xl font-semibold block leading-snug text-ink">
                     {game.title}
+                    {game.arabicTitle && (
+                      <span className="ms-2 font-sans text-base font-semibold text-sage-dark" dir="rtl" lang="ar">
+                        {game.arabicTitle}
+                      </span>
+                    )}
                   </span>
                   {game.alsoKnownAs && (
                     <span className="mt-0.5 block text-xs font-sans text-ink-muted">
@@ -59,7 +59,6 @@ export function GamesPage() {
                   )}
                   <span className="mt-1 block text-sm text-ink-muted font-sans leading-relaxed">
                     {game.tagline}
-                    {!isLive ? ' · Coming soon' : ''}
                   </span>
                 </span>
                 <span
@@ -69,7 +68,7 @@ export function GamesPage() {
                       : 'bg-cream-dark text-ink-muted'
                   }`}
                 >
-                  {isLive ? 'View' : 'Soon'}
+                  {isLive ? 'View' : 'Coming soon'}
                 </span>
               </>
             )

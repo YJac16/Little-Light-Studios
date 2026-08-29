@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom'
+import { BrowserRouter, Navigate, Routes, Route, useParams } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { HomePage } from './pages/HomePage'
 import { VideosPage } from './pages/VideosPage'
@@ -6,6 +6,8 @@ import { StoriesPage } from './pages/StoriesPage'
 import { StoryDetailPage } from './pages/StoryDetailPage'
 import { GamesPage } from './pages/GamesPage'
 import { GameDetailPage } from './pages/GameDetailPage'
+import { AboutPage } from './pages/AboutPage'
+import { NotFoundPage } from './pages/NotFoundPage'
 
 function StoryDetailRoute() {
   const { id } = useParams<{ id: string }>()
@@ -27,7 +29,12 @@ function App() {
           <Route path="stories" element={<StoriesPage />} />
           <Route path="stories/:id" element={<StoryDetailRoute />} />
           <Route path="games" element={<GamesPage />} />
+          <Route path="games/manar" element={<Navigate to="/games/manar-learning" replace />} />
           <Route path="games/:id" element={<GameDetailRoute />} />
+          <Route path="about" element={<AboutPage />} />
+          <Route path="manar" element={<Navigate to="/games/manar-learning" replace />} />
+          <Route path="learning" element={<Navigate to="/games/manar-learning" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
