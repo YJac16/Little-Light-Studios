@@ -33,15 +33,16 @@ export function AboutPage() {
             </a>{' '}
             and{' '}
             <a
-              href="https://manar-learning.vercel.app/"
+              href="https://manar-learning.vercel.app/learn"
               target="_blank"
               rel="noopener noreferrer"
               className="font-semibold text-sage-dark hover:text-ink"
             >
               MANĀR
             </a>
-            , a beacon for English, Arabic, reading, and maths. More games will land
-            when they are ready — we will not pretend they are here yet.
+            — today&apos;s word and a little maths, with magnet tiles and no login.
+            More games will land when they are ready — we will not pretend they
+            are here yet.
           </p>
           <p>
             Video learning continues on{' '}

@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 import gamesData from '../data/games.json'
 import { EmptyState } from '../components/EmptyState'
+import { ManarMagnetArt } from '../components/ManarMagnetArt'
 import type { Game } from '../types/game'
 
 const games = gamesData as Game[]
@@ -58,17 +59,27 @@ export function GameDetailPage() {
         <article
           className={`rounded-[1.75rem] border border-white/80 bg-gradient-to-br ${accentPanel[game.accent]} p-6 sm:p-8 md:p-10 shadow-soft animate-rise`}
         >
-          <p className="text-xs font-sans font-bold tracking-[0.14em] uppercase text-honey-deep mb-3">
-            {isLive ? 'Ready to play' : 'Coming soon'}
-          </p>
-          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl text-ink leading-[1.1] mb-2">
-            {game.title}
-          </h1>
-          {game.alsoKnownAs && (
-            <p className="text-sm font-sans text-ink-muted mb-2">
-              Also known as {game.alsoKnownAs}
-            </p>
-          )}
+          <div className="flex flex-col sm:flex-row sm:items-start gap-5 sm:gap-6 mb-2">
+            {game.art === 'manar-magnet' && <ManarMagnetArt size="detail" />}
+            <div className="min-w-0">
+              <p className="text-xs font-sans font-bold tracking-[0.14em] uppercase text-honey-deep mb-3">
+                {game.kicker ?? (isLive ? 'Ready to play' : 'Coming soon')}
+              </p>
+              <h1 className="font-display text-3xl sm:text-4xl md:text-5xl text-ink leading-[1.1] mb-2">
+                {game.title}
+              </h1>
+              {game.arabicTitle && (
+                <p className="font-display text-2xl text-sage-dark mb-2" dir="rtl" lang="ar">
+                  {game.arabicTitle}
+                </p>
+              )}
+              {game.alsoKnownAs && (
+                <p className="text-sm font-sans text-ink-muted mb-2">
+                  Also known as {game.alsoKnownAs}
+                </p>
+              )}
+            </div>
+          </div>
           <p className="font-sans font-semibold text-sage-dark text-base sm:text-lg mb-4">
             {game.tagline}
           </p>
@@ -78,14 +89,26 @@ export function GameDetailPage() {
 
           <div className="flex flex-col sm:flex-row gap-3">
             {isLive ? (
-              <a
-                href={game.url!}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center min-h-[52px] px-7 rounded-2xl bg-ink text-cream font-sans font-bold text-base shadow-lift hover:bg-ink/90 active:scale-[0.98] transition-all touch-manipulation"
-              >
-                Play game
-              </a>
+              <>
+                <a
+                  href={game.url!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center min-h-[52px] px-7 rounded-2xl bg-ink text-cream font-sans font-bold text-base shadow-lift hover:bg-ink/90 active:scale-[0.98] transition-all touch-manipulation"
+                >
+                  {game.playLabel ?? 'Play game'}
+                </a>
+                {game.practiceUrl && (
+                  <a
+                    href={game.practiceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center min-h-[52px] px-7 rounded-2xl bg-white/85 text-ink font-sans font-bold text-base border border-ink/10 hover:bg-white active:scale-[0.98] transition-all touch-manipulation"
+                  >
+                    Practice
+                  </a>
+                )}
+              </>
             ) : (
               <span className="inline-flex items-center justify-center min-h-[52px] px-7 rounded-2xl bg-white/60 text-ink-muted font-sans font-semibold text-base">
                 Coming soon

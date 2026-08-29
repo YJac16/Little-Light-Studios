@@ -12,10 +12,15 @@
   {
     "id": "manar-learning",
     "title": "MANĀR",
+    "arabicTitle": "مَنَار",
     "alsoKnownAs": "Manar Learning",
-    "tagline": "A beacon for learning — English, Arabic, reading, maths",
-    "description": "Magnet-style words and sums. Daily word. Calm, tactile, no accounts.",
-    "url": "https://manar-learning.vercel.app/",
+    "tagline": "Today's word and a little maths.",
+    "description": "Magnet tiles, English and vocalised Arabic, Word of the Day. No login.",
+    "url": "https://manar-learning.vercel.app/learn",
+    "practiceUrl": "https://manar-learning.vercel.app/practice",
+    "playLabel": "Today's lesson",
+    "kicker": "Daily ritual",
+    "art": "manar-magnet",
     "accent": "sage",
     "status": "live"
   },

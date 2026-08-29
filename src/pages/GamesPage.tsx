@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import gamesData from '../data/games.json'
+import { ManarMagnetArt } from '../components/ManarMagnetArt'
 import type { Game } from '../types/game'
 
 const accentDot: Record<Game['accent'], string> = {
@@ -34,13 +35,22 @@ export function GamesPage() {
             const isLive = game.status === 'live' && !!game.url
             const content = (
               <>
-                <span
-                  className={`mt-1.5 h-3 w-3 rounded-full shrink-0 ${accentDot[game.accent]}`}
-                  aria-hidden
-                />
+                {game.art === 'manar-magnet' ? (
+                  <ManarMagnetArt size="list" />
+                ) : (
+                  <span
+                    className={`mt-1.5 h-3 w-3 rounded-full shrink-0 ${accentDot[game.accent]}`}
+                    aria-hidden
+                  />
+                )}
                 <span className="min-w-0 flex-1">
                   <span className="font-display text-lg sm:text-xl font-semibold block leading-snug text-ink">
                     {game.title}
+                    {game.arabicTitle && (
+                      <span className="ms-2 font-sans text-base font-semibold text-sage-dark" dir="rtl" lang="ar">
+                        {game.arabicTitle}
+                      </span>
+                    )}
                   </span>
                   {game.alsoKnownAs && (
                     <span className="mt-0.5 block text-xs font-sans text-ink-muted">
