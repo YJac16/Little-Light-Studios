@@ -11,7 +11,7 @@ const destinations = [
   {
     to: '/stories',
     title: 'Stories',
-    blurb: 'Soft narrations for nap and bedtime.',
+    blurb: 'Browse illustrated covers — tap one to listen.',
     accent: 'sage' as const,
     chip: 'Listen',
   },
