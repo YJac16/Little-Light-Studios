@@ -3,16 +3,7 @@ import { useRef, useState, useEffect } from 'react'
 import storiesData from '../data/stories.json'
 import { READING_TIPS } from '../data/readingTips'
 import { DHIKR_OPTIONS, WHITE_NOISE_OPTIONS } from '../data/audioOptions'
-
-interface Story {
-  id: string
-  title: string
-  subtitle?: string
-  text: string
-  narrationUrl: string | null
-  dhikrUrl: string | null
-  whiteNoiseUrl: string | null
-}
+import type { Story } from '../types/story'
 
 const stories = storiesData as Story[]
 
@@ -148,6 +139,14 @@ export function StoryDetailPage() {
       >
         ← Back to Stories
       </Link>
+
+      <div className="mb-6 overflow-hidden rounded-2xl border border-ink/8 bg-cream-dark shadow-soft sm:mb-8">
+        <img
+          src={story.cover}
+          alt=""
+          className="mx-auto aspect-[3/4] max-h-[min(52vh,420px)] w-full max-w-sm object-cover"
+        />
+      </div>
 
       {/* Reading tips */}
       <div className="rounded-3xl bg-lavender-light/35 border border-lavender-light/80 p-4 sm:p-5 mb-6">
