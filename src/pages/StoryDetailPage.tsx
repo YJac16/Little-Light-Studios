@@ -70,6 +70,56 @@ function IconPause() {
   )
 }
 
+function IconPlaySmall() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 ml-0.5" aria-hidden>
+      <path d="M8 5v14l11-7L8 5z" />
+    </svg>
+  )
+}
+
+function IconPauseSmall() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4" aria-hidden>
+      <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+    </svg>
+  )
+}
+
+function IconChevronUp() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5" aria-hidden>
+      <path d="M6 15l6-6 6 6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function IconChevronDown() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5" aria-hidden>
+      <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+const PLAYER_EXPANDED_KEY = 'lls-story-player-expanded'
+
+function readPlayerExpanded(): boolean {
+  try {
+    return sessionStorage.getItem(PLAYER_EXPANDED_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+function writePlayerExpanded(expanded: boolean) {
+  try {
+    sessionStorage.setItem(PLAYER_EXPANDED_KEY, String(expanded))
+  } catch {
+    // ignore storage errors
+  }
+}
+
 const PLAYER_SCRUBBER_STYLES = `
 .story-player-scrubber::-webkit-slider-runnable-track {
   height: 6px;
@@ -138,8 +188,18 @@ export function StoryDetailPage() {
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [isSeeking, setIsSeeking] = useState(false)
+  const [playerExpanded, setPlayerExpanded] = useState(readPlayerExpanded)
 
   const hasNarration = !!story?.narrationUrl
+  const progressPercent = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0
+
+  const togglePlayerExpanded = () => {
+    setPlayerExpanded((prev) => {
+      const next = !prev
+      writePlayerExpanded(next)
+      return next
+    })
+  }
 
   useEffect(() => {
     const a = narrationRef.current
@@ -249,7 +309,11 @@ export function StoryDetailPage() {
   }
 
   return (
-    <main className="relative max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-44 sm:pb-40">
+    <main
+      className={`relative max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 ${
+        playerExpanded ? 'pb-44 sm:pb-40' : 'pb-28 sm:pb-24'
+      }`}
+    >
       <Link
         to="/stories"
         className="inline-flex items-center min-h-[44px] py-2 -my-1 text-sage-dark hover:text-sage text-sm font-sans font-semibold mb-6 touch-manipulation"
@@ -282,107 +346,172 @@ export function StoryDetailPage() {
       </div>
 
       {/* Fixed bottom media player */}
-      <div className="fixed bottom-[calc(56px+env(safe-area-inset-bottom))] sm:bottom-0 left-0 right-0 z-40 bg-cream/95 backdrop-blur-md border-t border-sage-light/30 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] sm:pb-[env(safe-area-inset-bottom)]">
+      <div className="fixed bottom-[calc(56px+env(safe-area-inset-bottom))] sm:bottom-0 left-0 right-0 z-40 bg-cream/95 backdrop-blur-md border-t border-sage-light/25 shadow-[0_-2px_12px_rgba(0,0,0,0.04)] sm:pb-[env(safe-area-inset-bottom)]">
         <style>{PLAYER_SCRUBBER_STYLES}</style>
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2.5 sm:py-3">
-          {/* Progress scrubber */}
-          <div className="mb-2">
-            <input
-              type="range"
-              min={0}
-              max={duration || 0}
-              step={0.1}
-              value={currentTime}
-              disabled={!hasNarration || duration <= 0}
-              onChange={(e) => handleSeek(Number(e.target.value))}
-              onPointerDown={() => setIsSeeking(true)}
-              onPointerUp={() => setIsSeeking(false)}
-              className="story-player-scrubber w-full h-1.5 appearance-none rounded-full bg-sage-light/40 disabled:opacity-40 cursor-pointer touch-manipulation"
-              aria-label="Narration progress"
-            />
-            <div className="flex justify-between items-center mt-1 px-0.5">
-              <span className="text-[11px] font-sans tabular-nums text-ink-muted">
-                {formatTime(currentTime)}
-              </span>
-              <span className="text-[11px] font-sans tabular-nums text-ink-muted">
-                -{formatTime(Math.max(0, duration - currentTime))}
-              </span>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          {playerExpanded ? (
+            <div className="py-2.5 sm:py-3">
+              <div className="flex justify-end mb-1.5">
+                <button
+                  type="button"
+                  onClick={togglePlayerExpanded}
+                  className="inline-flex items-center gap-1 min-h-[44px] px-2 -mr-2 text-xs font-sans font-medium text-ink-muted hover:text-sage-dark touch-manipulation"
+                  aria-expanded={playerExpanded}
+                  aria-label="Hide player"
+                >
+                  Hide player
+                  <IconChevronDown />
+                </button>
+              </div>
+
+              {/* Progress scrubber */}
+              <div className="mb-2">
+                <input
+                  type="range"
+                  min={0}
+                  max={duration || 0}
+                  step={0.1}
+                  value={currentTime}
+                  disabled={!hasNarration || duration <= 0}
+                  onChange={(e) => handleSeek(Number(e.target.value))}
+                  onPointerDown={() => setIsSeeking(true)}
+                  onPointerUp={() => setIsSeeking(false)}
+                  className="story-player-scrubber w-full h-1.5 appearance-none rounded-full bg-sage-light/40 disabled:opacity-40 cursor-pointer touch-manipulation"
+                  aria-label="Narration progress"
+                />
+                <div className="flex justify-between items-center mt-1 px-0.5">
+                  <span className="text-[11px] font-sans tabular-nums text-ink-muted">
+                    {formatTime(currentTime)}
+                  </span>
+                  <span className="text-[11px] font-sans tabular-nums text-ink-muted">
+                    -{formatTime(Math.max(0, duration - currentTime))}
+                  </span>
+                </div>
+              </div>
+
+              {/* Main transport row */}
+              <div className="flex items-center gap-1.5 mb-2">
+                <p className="flex-1 min-w-0 truncate font-display font-semibold text-sm text-ink leading-tight">
+                  {story.title}
+                </p>
+                <button
+                  type="button"
+                  onClick={goPrev}
+                  disabled={!prev}
+                  className="shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-sage-dark disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation hover:bg-sage-light/20"
+                  aria-label="Previous story"
+                >
+                  <IconPrev />
+                </button>
+                <button
+                  type="button"
+                  onClick={toggleNarration}
+                  disabled={!hasNarration}
+                  className="shrink-0 min-h-[48px] min-w-[48px] flex items-center justify-center rounded-full bg-sage text-cream disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation"
+                  aria-label={narrationPlaying ? 'Pause' : 'Play'}
+                >
+                  {narrationPlaying ? <IconPause /> : <IconPlay />}
+                </button>
+                <button
+                  type="button"
+                  onClick={goNext}
+                  disabled={!next}
+                  className="shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-sage-dark disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation hover:bg-sage-light/20"
+                  aria-label="Next story"
+                >
+                  <IconNext />
+                </button>
+              </div>
+
+              {/* Secondary controls */}
+              <div className="flex flex-wrap justify-center items-center gap-1.5 pb-0.5">
+                <button
+                  type="button"
+                  onClick={cycleSpeed}
+                  className="min-h-[44px] px-3 rounded-full border border-sage-light/60 text-sage-dark text-xs font-medium font-sans touch-manipulation hover:border-sage/40"
+                  title="Change narration speed"
+                >
+                  {playbackRate}x
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLoopStory(!loopStory)}
+                  className={`min-h-[44px] px-3 rounded-full border text-xs font-medium font-sans touch-manipulation ${
+                    loopStory
+                      ? 'border-sage/50 bg-sage/15 text-sage-dark'
+                      : 'border-sage-light/60 text-ink-muted hover:border-sage/40'
+                  }`}
+                  aria-pressed={loopStory}
+                >
+                  Loop {loopStory ? 'On' : 'Off'}
+                </button>
+                <button
+                  type="button"
+                  onClick={cycleDhikr}
+                  className={`min-h-[44px] px-3 rounded-full border text-xs font-medium font-sans touch-manipulation ${
+                    dhikrIndex >= 0
+                      ? 'border-sage/50 bg-sage/15 text-sage-dark'
+                      : 'border-sage-light/60 text-ink-muted hover:border-sage/40'
+                  }`}
+                >
+                  Dhikr {dhikrIndex < 0 ? 'Off' : dhikrIndex + 1}
+                </button>
+                <button
+                  type="button"
+                  onClick={cycleWhiteNoise}
+                  className={`min-h-[44px] px-3 rounded-full border text-xs font-medium font-sans touch-manipulation ${
+                    whiteNoiseIndex >= 0
+                      ? 'border-sage/50 bg-sage/15 text-sage-dark'
+                      : 'border-sage-light/60 text-ink-muted hover:border-sage/40'
+                  }`}
+                >
+                  White noise {whiteNoiseIndex < 0 ? 'Off' : whiteNoiseIndex + 1}
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="py-2">
+              {/* Hairline progress */}
+              <div
+                className="h-0.5 w-full rounded-full bg-sage-light/35 overflow-hidden mb-2"
+                role="progressbar"
+                aria-valuenow={currentTime}
+                aria-valuemin={0}
+                aria-valuemax={duration || 0}
+                aria-label="Narration progress"
+              >
+                <div
+                  className="h-full bg-sage rounded-full transition-[width] duration-300 ease-linear"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
 
-          {/* Main transport row */}
-          <div className="flex items-center gap-2 mb-2">
-            <p className="flex-1 min-w-0 truncate font-display font-semibold text-sm text-ink leading-tight pr-1">
-              {story.title}
-            </p>
-            <button
-              type="button"
-              onClick={goPrev}
-              disabled={!prev}
-              className="shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-sage-light/35 text-sage-dark disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation"
-              aria-label="Previous story"
-            >
-              <IconPrev />
-            </button>
-            <button
-              type="button"
-              onClick={toggleNarration}
-              disabled={!hasNarration}
-              className="shrink-0 min-h-[48px] min-w-[48px] flex items-center justify-center rounded-full bg-sage text-cream disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation shadow-sm"
-              aria-label={narrationPlaying ? 'Pause' : 'Play'}
-            >
-              {narrationPlaying ? <IconPause /> : <IconPlay />}
-            </button>
-            <button
-              type="button"
-              onClick={goNext}
-              disabled={!next}
-              className="shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-sage-light/35 text-sage-dark disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation"
-              aria-label="Next story"
-            >
-              <IconNext />
-            </button>
-          </div>
-
-          {/* Secondary controls */}
-          <div className="flex flex-wrap justify-center items-center gap-1.5">
-            <button
-              type="button"
-              onClick={cycleSpeed}
-              className="min-h-[44px] px-3 rounded-full bg-sage-light/30 text-sage-dark text-xs font-medium font-sans touch-manipulation"
-              title="Change narration speed"
-            >
-              {playbackRate}x
-            </button>
-            <button
-              type="button"
-              onClick={() => setLoopStory(!loopStory)}
-              className={`min-h-[44px] px-3 rounded-full text-xs font-medium font-sans touch-manipulation ${
-                loopStory ? 'bg-sage/45 text-sage-dark' : 'bg-sage-light/30 text-sage-dark'
-              }`}
-              aria-pressed={loopStory}
-            >
-              Loop {loopStory ? 'On' : 'Off'}
-            </button>
-            <button
-              type="button"
-              onClick={cycleDhikr}
-              className={`min-h-[44px] px-3 rounded-full text-xs font-medium font-sans touch-manipulation ${
-                dhikrIndex >= 0 ? 'bg-sage/45 text-sage-dark' : 'bg-sage-light/30 text-sage-dark'
-              }`}
-            >
-              Dhikr {dhikrIndex < 0 ? 'Off' : dhikrIndex + 1}
-            </button>
-            <button
-              type="button"
-              onClick={cycleWhiteNoise}
-              className={`min-h-[44px] px-3 rounded-full text-xs font-medium font-sans touch-manipulation ${
-                whiteNoiseIndex >= 0 ? 'bg-sage/45 text-sage-dark' : 'bg-sage-light/30 text-sage-dark'
-              }`}
-            >
-              White noise {whiteNoiseIndex < 0 ? 'Off' : whiteNoiseIndex + 1}
-            </button>
-          </div>
+              {/* Collapsed transport row */}
+              <div className="flex items-center gap-2">
+                <p className="flex-1 min-w-0 truncate font-display font-semibold text-sm text-ink leading-tight">
+                  {story.title}
+                </p>
+                <button
+                  type="button"
+                  onClick={toggleNarration}
+                  disabled={!hasNarration}
+                  className="shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-sage text-cream disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation"
+                  aria-label={narrationPlaying ? 'Pause' : 'Play'}
+                >
+                  {narrationPlaying ? <IconPauseSmall /> : <IconPlaySmall />}
+                </button>
+                <button
+                  type="button"
+                  onClick={togglePlayerExpanded}
+                  className="shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-ink-muted hover:text-sage-dark hover:bg-sage-light/20 touch-manipulation"
+                  aria-expanded={playerExpanded}
+                  aria-label="Show player"
+                >
+                  <IconChevronUp />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
