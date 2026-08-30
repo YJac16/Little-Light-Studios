@@ -31,6 +31,81 @@ function getPrevNextIds(currentId: string): { prev: string | null; next: string 
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25]
 
+function formatTime(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return '0:00'
+  const m = Math.floor(seconds / 60)
+  const s = Math.floor(seconds % 60)
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+function IconPrev() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden>
+      <path d="M6 6h2v12H6V6zm3.5 6 8.5 6V6l-8.5 6z" />
+    </svg>
+  )
+}
+
+function IconNext() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden>
+      <path d="M16 6h2v12h-2V6zM6 6l8.5 6L6 18V6z" />
+    </svg>
+  )
+}
+
+function IconPlay() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 ml-0.5" aria-hidden>
+      <path d="M8 5v14l11-7L8 5z" />
+    </svg>
+  )
+}
+
+function IconPause() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6" aria-hidden>
+      <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+    </svg>
+  )
+}
+
+const PLAYER_SCRUBBER_STYLES = `
+.story-player-scrubber::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: rgba(183, 208, 187, 0.45);
+}
+.story-player-scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -4px;
+  border-radius: 9999px;
+  background: #6f9b78;
+  border: 2px solid #fff9f1;
+  box-shadow: 0 1px 3px rgba(31, 42, 46, 0.15);
+}
+.story-player-scrubber::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: rgba(183, 208, 187, 0.45);
+}
+.story-player-scrubber::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: #6f9b78;
+  border: 2px solid #fff9f1;
+  box-shadow: 0 1px 3px rgba(31, 42, 46, 0.15);
+}
+.story-player-scrubber:disabled::-webkit-slider-thumb,
+.story-player-scrubber:disabled::-moz-range-thumb {
+  background: #b7d0bb;
+}
+`
+
 // Dhikr index: -1 = off, 0 = option 1, 1 = option 2
 // White noise: same
 function cycleDhikrIndex(current: number): number {
@@ -60,6 +135,9 @@ export function StoryDetailPage() {
   const [dhikrIndex, setDhikrIndex] = useState(-1)
   const [whiteNoiseIndex, setWhiteNoiseIndex] = useState(-1)
   const [playbackRate, setPlaybackRate] = useState(1)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [isSeeking, setIsSeeking] = useState(false)
 
   const hasNarration = !!story?.narrationUrl
 
@@ -67,6 +145,36 @@ export function StoryDetailPage() {
     const a = narrationRef.current
     if (a) a.playbackRate = playbackRate
   }, [playbackRate])
+
+  useEffect(() => {
+    const a = narrationRef.current
+    if (!a || !hasNarration) return
+
+    const onTimeUpdate = () => {
+      if (!isSeeking) setCurrentTime(a.currentTime)
+    }
+    const onLoadedMetadata = () => setDuration(a.duration || 0)
+    const onDurationChange = () => setDuration(a.duration || 0)
+
+    a.addEventListener('timeupdate', onTimeUpdate)
+    a.addEventListener('loadedmetadata', onLoadedMetadata)
+    a.addEventListener('durationchange', onDurationChange)
+
+    if (a.duration) setDuration(a.duration)
+
+    return () => {
+      a.removeEventListener('timeupdate', onTimeUpdate)
+      a.removeEventListener('loadedmetadata', onLoadedMetadata)
+      a.removeEventListener('durationchange', onDurationChange)
+    }
+  }, [hasNarration, isSeeking, story?.narrationUrl])
+
+  const handleSeek = (value: number) => {
+    const a = narrationRef.current
+    if (!a || !hasNarration) return
+    a.currentTime = value
+    setCurrentTime(value)
+  }
 
   const toggleNarration = () => {
     const audio = narrationRef.current
@@ -141,7 +249,7 @@ export function StoryDetailPage() {
   }
 
   return (
-    <main className="relative max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-52 sm:pb-48">
+    <main className="relative max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-44 sm:pb-40">
       <Link
         to="/stories"
         className="inline-flex items-center min-h-[44px] py-2 -my-1 text-sage-dark hover:text-sage text-sm font-sans font-semibold mb-6 touch-manipulation"
@@ -173,46 +281,75 @@ export function StoryDetailPage() {
         </p>
       </div>
 
-      {/* Fixed bottom media player - centered */}
+      {/* Fixed bottom media player */}
       <div className="fixed bottom-[calc(56px+env(safe-area-inset-bottom))] sm:bottom-0 left-0 right-0 z-40 bg-cream/95 backdrop-blur-md border-t border-sage-light/30 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] sm:pb-[env(safe-area-inset-bottom)]">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
-          {/* Row 1: Prev | Play-Pause | Next - centered */}
-          <div className="flex justify-center items-center gap-2 sm:gap-3 mb-3">
+        <style>{PLAYER_SCRUBBER_STYLES}</style>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2.5 sm:py-3">
+          {/* Progress scrubber */}
+          <div className="mb-2">
+            <input
+              type="range"
+              min={0}
+              max={duration || 0}
+              step={0.1}
+              value={currentTime}
+              disabled={!hasNarration || duration <= 0}
+              onChange={(e) => handleSeek(Number(e.target.value))}
+              onPointerDown={() => setIsSeeking(true)}
+              onPointerUp={() => setIsSeeking(false)}
+              className="story-player-scrubber w-full h-1.5 appearance-none rounded-full bg-sage-light/40 disabled:opacity-40 cursor-pointer touch-manipulation"
+              aria-label="Narration progress"
+            />
+            <div className="flex justify-between items-center mt-1 px-0.5">
+              <span className="text-[11px] font-sans tabular-nums text-ink-muted">
+                {formatTime(currentTime)}
+              </span>
+              <span className="text-[11px] font-sans tabular-nums text-ink-muted">
+                -{formatTime(Math.max(0, duration - currentTime))}
+              </span>
+            </div>
+          </div>
+
+          {/* Main transport row */}
+          <div className="flex items-center gap-2 mb-2">
+            <p className="flex-1 min-w-0 truncate font-display font-semibold text-sm text-ink leading-tight pr-1">
+              {story.title}
+            </p>
             <button
               type="button"
               onClick={goPrev}
               disabled={!prev}
-              className="min-h-[48px] min-w-[48px] flex items-center justify-center rounded-xl bg-sage-light/30 text-sage-dark disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation text-xl"
+              className="shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-sage-light/35 text-sage-dark disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation"
               aria-label="Previous story"
             >
-              ⏮
+              <IconPrev />
             </button>
             <button
               type="button"
               onClick={toggleNarration}
               disabled={!hasNarration}
-              className="min-h-[52px] min-w-[52px] flex items-center justify-center rounded-xl bg-sage/30 text-sage-dark disabled:opacity-40 touch-manipulation text-2xl"
+              className="shrink-0 min-h-[48px] min-w-[48px] flex items-center justify-center rounded-full bg-sage text-cream disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation shadow-sm"
               aria-label={narrationPlaying ? 'Pause' : 'Play'}
             >
-              {narrationPlaying ? '⏸' : '▶'}
+              {narrationPlaying ? <IconPause /> : <IconPlay />}
             </button>
             <button
               type="button"
               onClick={goNext}
               disabled={!next}
-              className="min-h-[48px] min-w-[48px] flex items-center justify-center rounded-xl bg-sage-light/30 text-sage-dark disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation text-xl"
+              className="shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-sage-light/35 text-sage-dark disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation"
               aria-label="Next story"
             >
-              ⏭
+              <IconNext />
             </button>
           </div>
 
-          {/* Row 2: Speed | Loop | Dhikr | White noise */}
-          <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-3">
+          {/* Secondary controls */}
+          <div className="flex flex-wrap justify-center items-center gap-1.5">
             <button
               type="button"
               onClick={cycleSpeed}
-              className="min-h-[44px] px-4 rounded-xl bg-sage-light/30 text-sage-dark text-sm font-medium touch-manipulation"
+              className="min-h-[44px] px-3 rounded-full bg-sage-light/30 text-sage-dark text-xs font-medium font-sans touch-manipulation"
               title="Change narration speed"
             >
               {playbackRate}x
@@ -220,8 +357,8 @@ export function StoryDetailPage() {
             <button
               type="button"
               onClick={() => setLoopStory(!loopStory)}
-              className={`min-h-[44px] px-4 rounded-xl text-sm font-medium touch-manipulation ${
-                loopStory ? 'bg-sage/40 text-sage-dark' : 'bg-sage-light/30 text-sage-dark'
+              className={`min-h-[44px] px-3 rounded-full text-xs font-medium font-sans touch-manipulation ${
+                loopStory ? 'bg-sage/45 text-sage-dark' : 'bg-sage-light/30 text-sage-dark'
               }`}
               aria-pressed={loopStory}
             >
@@ -230,8 +367,8 @@ export function StoryDetailPage() {
             <button
               type="button"
               onClick={cycleDhikr}
-              className={`min-h-[44px] px-4 rounded-xl text-sm font-medium touch-manipulation ${
-                dhikrIndex >= 0 ? 'bg-sage/40 text-sage-dark' : 'bg-sage-light/30 text-sage-dark'
+              className={`min-h-[44px] px-3 rounded-full text-xs font-medium font-sans touch-manipulation ${
+                dhikrIndex >= 0 ? 'bg-sage/45 text-sage-dark' : 'bg-sage-light/30 text-sage-dark'
               }`}
             >
               Dhikr {dhikrIndex < 0 ? 'Off' : dhikrIndex + 1}
@@ -239,8 +376,8 @@ export function StoryDetailPage() {
             <button
               type="button"
               onClick={cycleWhiteNoise}
-              className={`min-h-[44px] px-4 rounded-xl text-sm font-medium touch-manipulation ${
-                whiteNoiseIndex >= 0 ? 'bg-sage/40 text-sage-dark' : 'bg-sage-light/30 text-sage-dark'
+              className={`min-h-[44px] px-3 rounded-full text-xs font-medium font-sans touch-manipulation ${
+                whiteNoiseIndex >= 0 ? 'bg-sage/45 text-sage-dark' : 'bg-sage-light/30 text-sage-dark'
               }`}
             >
               White noise {whiteNoiseIndex < 0 ? 'Off' : whiteNoiseIndex + 1}
