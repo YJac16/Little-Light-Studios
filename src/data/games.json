@@ -10,6 +10,15 @@
     "status": "live"
   },
   {
+    "id": "manar",
+    "title": "MANĀR",
+    "tagline": "A Beacon for Learning",
+    "description": "Learn, practice, and track progress. A calm learning space for young hearts.",
+    "url": "https://manar-learning.vercel.app/",
+    "accent": "sage",
+    "status": "live"
+  },
+  {
     "id": "starlight-paths",
     "title": "Starlight Paths",
     "tagline": "Coming soon",
