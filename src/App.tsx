@@ -6,6 +6,7 @@ import { StoriesPage } from './pages/StoriesPage'
 import { StoryDetailPage } from './pages/StoryDetailPage'
 import { GamesPage } from './pages/GamesPage'
 import { GameDetailPage } from './pages/GameDetailPage'
+import { NotFoundPage } from './pages/NotFoundPage'
 
 function StoryDetailRoute() {
   const { id } = useParams<{ id: string }>()
@@ -28,6 +29,7 @@ function App() {
           <Route path="stories/:id" element={<StoryDetailRoute />} />
           <Route path="games" element={<GamesPage />} />
           <Route path="games/:id" element={<GameDetailRoute />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
