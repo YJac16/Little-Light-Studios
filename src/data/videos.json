@@ -5,5 +5,19 @@
     "thumbnail": "https://img.youtube.com/vi/IBsQIqzzl7s/hqdefault.jpg",
     "youtubeId": "IBsQIqzzl7s",
     "description": "Calm learning videos from our YouTube channel."
+  },
+  {
+    "id": "2",
+    "title": "The Lost Red Balloon",
+    "thumbnail": "https://img.youtube.com/vi/GN_-dLbuBKk/hqdefault.jpg",
+    "youtubeId": "GN_-dLbuBKk",
+    "description": "A gentle story about colours and asking for help when something goes missing."
+  },
+  {
+    "id": "3",
+    "title": "Itsy Bitsy Spider – Keep Trying",
+    "thumbnail": "https://img.youtube.com/vi/sYG6zNsOlVM/hqdefault.jpg",
+    "youtubeId": "sYG6zNsOlVM",
+    "description": "A sing-along twist on the classic rhyme about never giving up."
   }
 ]
